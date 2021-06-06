@@ -12,12 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <climits>
-#include <cstddef>
-#include <array>
-#include <limits>
-#include <type_traits>
-
 #include "autk/platform/string.h"
 
 using namespace autk;

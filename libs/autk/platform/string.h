@@ -18,8 +18,11 @@
 #include "autk/string.h"
 #include "autk/types.h"
 
+#include <climits>
 #include <array>
+#include <limits>
 #include <optional>
+#include <type_traits>
 
 namespace autk {
 
@@ -102,7 +105,7 @@ namespace autk {
         // UTF-8 encoder/decoder.
         template<Utf8_code_unit T>
         struct Utf_codec<T, 8> : No_inst {
-            static inline constexpr unsigned max_seq_len = 4;
+            static constexpr unsigned max_seq_len = 4;
 
             // Decodes a UTF-8 sequence at the front of the input string.
             static Utf_result<char32_t> decode(std::basic_string_view<T> str)
@@ -223,7 +226,7 @@ namespace autk {
         // UTF-16 encoder/decoder.
         template<Utf16_code_unit T>
         struct Utf_codec<T, 16> : No_inst {
-            static inline constexpr unsigned max_seq_len = 2;
+            static constexpr unsigned max_seq_len = 2;
 
             // Decodes a UTF-16 sequence at the front of the input string.
             static Utf_result<char32_t> decode(std::basic_string_view<T> str)
@@ -272,6 +275,42 @@ namespace autk {
                     result.status = Utf_status::out_of_range;
                     return result;
                 }
+            }
+        };
+
+        // UTF-32 encoder/decoder.
+        template<Utf32_code_unit T>
+        struct Utf_codec<T, 32> {
+            static constexpr unsigned max_seq_len = 1;
+
+            // Decodes a UTF-32 sequence at the front of the input string.
+            static Utf_result<char32_t> decode(std::basic_string_view<T> str)
+            {
+                if (str.empty()) {
+                    return {Utf_status::empty, 0, 0};
+                }
+
+                auto ch = char32_t(str[0] & 0xFFFFFFFFul);
+
+                if (ch > unicode_max) {
+                    return {Utf_status::out_of_range, replacement_char, 1};
+                } else if (ch >= min_surrogate_char && ch <= max_surrogate_char) {
+                    return {Utf_status::reserved, ch, 1};
+                }
+
+                return {Utf_status::ok, ch, 1};
+            }
+
+            // Encodes a UTF-32 sequence.
+            static Utf_result<std::array<T, max_seq_len>> encode(char32_t ch)
+            {
+                if (ch > unicode_max) {
+                    return {Utf_status::out_of_range, {T(replacement_char)}, 1};
+                } else if (ch >= min_surrogate_char && ch <= max_surrogate_char) {
+                    return {Utf_status::reserved, {T(ch)}, 1};
+                }
+
+                return {Utf_status::ok, {T(ch)}, 1};
             }
         };
 

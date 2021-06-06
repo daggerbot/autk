@@ -19,8 +19,18 @@ set(AUTK_SOURCES
 set(AUTK_PLATFORM_SOURCES_WIN32
     "platform/win32/string.cpp"
 )
+set(AUTK_PLATFORM_SOURCES_UNIX
+    "platform/unix/string.cpp"
+)
 
 set(AUTK_PRIVATE_DEFS ${COMMON_DEFINITIONS})
+set(AUTK_PRIVATE_LIBS)
+
+if(AUTK_ICONV)
+    find_package("Iconv" REQUIRED)
+    list(APPEND AUTK_PRIVATE_LIBS "Iconv::Iconv")
+    list(APPEND AUTK_SOURCES "external/iconv.cpp")
+endif()
 
 #
 # Configure target platform.
@@ -29,6 +39,8 @@ set(AUTK_PRIVATE_DEFS ${COMMON_DEFINITIONS})
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
     list(APPEND AUTK_SOURCES ${AUTK_PLATFORM_SOURCES_WIN32})
     list(APPEND AUTK_PRIVATE_DEFS "AUTK_IMPORT=__declspec(dllexport)")
+elseif(UNIX)
+    list(APPEND AUTK_SOURCES ${AUTK_PLATFORM_SOURCES_UNIX})
 else()
     message(FATAL_ERROR "Unsupported platform: ${CMAKE_SYSTEM_NAME}")
 endif()
@@ -45,6 +57,10 @@ else()
 endif()
 
 target_include_directories("autk" PUBLIC "include" PRIVATE "${TOPSRCDIR}/libs")
+
+if(AUTK_PRIVATE_LIBS)
+    target_link_libraries("autk" PRIVATE ${AUTK_PRIVATE_LIBS})
+endif()
 
 if(COMMON_CXX_FLAGS)
     target_compile_options("autk" PRIVATE $<$<COMPILE_LANGUAGE:CXX>:${COMMON_CXX_FLAGS}>)
