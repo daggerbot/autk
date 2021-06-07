@@ -15,12 +15,24 @@
 #ifndef AUTK_OBJECT_H_INCLUDED
 #define AUTK_OBJECT_H_INCLUDED
 
+#include "autk/concepts.h"
 #include "autk/config.h"
 
 namespace autk {
 
+    /// \cond IMPL
+    namespace impl {
+
+        class Connection_base;
+        template<Any_object, Signal_arg...> class Member_connection;
+
+    } // namespace impl
+    /// \endcond
+
     /// Base class for signal-handling objects.
     class AUTK_IMPORT Object {
+        template<Any_object, Signal_arg...> friend class impl::Member_connection;
+
     public:
         Object();
         Object(Object&&) = delete;
@@ -29,6 +41,10 @@ namespace autk {
 
         Object& operator=(Object&&) = delete;
         Object& operator=(const Object&) = delete;
+
+    private:
+        impl::Connection_base* first_ctn_ = nullptr;
+        impl::Connection_base* last_ctn_ = nullptr;
     };
 
 } // namespace autk

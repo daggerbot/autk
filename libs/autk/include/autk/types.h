@@ -15,6 +15,9 @@
 #ifndef AUTK_TYPES_H_INCLUDED
 #define AUTK_TYPES_H_INCLUDED
 
+#include <concepts>
+#include <utility>
+
 #include "autk/config.h"
 
 /// \def AUTK_T
@@ -27,6 +30,57 @@
 
 namespace autk {
 
+    /// \cond IMPL
+    namespace impl {
+
+        /// Base for types that cannot be instantiated.
+        struct No_inst {
+            No_inst() = delete;
+            No_inst(No_inst&&) = delete;
+            No_inst(const No_inst&) = delete;
+            No_inst& operator=(No_inst&&) = delete;
+            No_inst& operator=(const No_inst&) = delete;
+        };
+
+        /// Object which invokes an action when its destructor is called.
+        template<std::invocable<> T>
+        class Final_action {
+        public:
+            Final_action() = delete;
+            Final_action(Final_action<T>&&) = delete;
+            Final_action(const Final_action<T>&) = delete;
+
+            constexpr explicit Final_action(T&& action)
+                : action_{std::move(action)}
+            {
+            }
+
+            ~Final_action()
+            {
+                this->action_();
+            }
+
+            Final_action<T>& operator=(Final_action<T>&&) = delete;
+            Final_action<T>& operator=(const Final_action<T>&) = delete;
+
+        private:
+            T action_;
+        };
+
+        /// Convenience function for constructing a Final_action.
+        template<std::invocable<> T>
+        constexpr Final_action<T> finally(T&& action)
+        {
+            return Final_action{std::move(action)};
+        }
+
+        /// Type which indicates that an action is intended for the calling thread.
+        enum class This_thread_t {};
+        inline constexpr auto this_thread = This_thread_t(0);
+
+    } // namespace impl
+    /// \endcond
+
     /// \typedef Os_char
     /// Preferred character type when using the underlying OS APIs.
     /// This is `wchar_t` on Windows and `char` on other platforms.
@@ -35,15 +89,6 @@ namespace autk {
 #else
     using Os_char = char;
 #endif
-
-    /// Base for types that cannot be instantiated.
-    struct No_inst {
-        No_inst() = delete;
-        No_inst(No_inst&&) = delete;
-        No_inst(const No_inst&) = delete;
-        No_inst& operator=(No_inst&&) = delete;
-        No_inst& operator=(const No_inst&) = delete;
-    };
 
 } // namespace autk
 

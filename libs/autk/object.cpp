@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "autk/object.h"
+#include "autk/signal.h"
 
 using namespace autk;
 
@@ -22,4 +23,10 @@ Object::Object()
 
 Object::~Object()
 {
+    // Disconnect from all signals.
+    while (auto ctn = first_ctn_) {
+        ctn->remove_from_owner();
+        ctn->remove_from_signal();
+        delete ctn;
+    }
 }

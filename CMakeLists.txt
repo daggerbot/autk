@@ -23,13 +23,32 @@ set(TOPSRCDIR "${CMAKE_CURRENT_SOURCE_DIR}")
 # Configure build options.
 #
 
+set(AUTK_ALL_DRIVERS "WIN32" "COCOA" "X11" "WAYLAND")
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    set(AUTK_DEFAULT_DRIVER "WIN32")
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    set(AUTK_DEFAULT_DRIVER "COCOA")
+elseif(UNIX)
+    set(AUTK_DEFAULT_DRIVER "X11")
+endif()
+
 set(AUTK_INSTALL_CONFIG_INCLUDEDIR "${CMAKE_INSTALL_INCLUDEDIR}" CACHE STRING "Install location for <autk/config.h>")
 set(AUTK_DEMOS ON CACHE BOOL "Build the autk demo apps")
 set(AUTK_DOXYGEN "doxygen" CACHE STRING "Command for building Doxygen documentation")
+set(AUTK_DRIVER "${AUTK_DEFAULT_DRIVER}" CACHE STRING "GUI driver for autk")
 set(AUTK_ICONV ON CACHE BOOL "Build autk with libiconv support")
 set(AUTK_MAIN ON CACHE BOOL "Build autk_main")
 set(AUTK_PIC ON CACHE BOOL "Generate position-independent code for autk")
 set(AUTK_SHARED OFF CACHE BOOL "Build autk as a shared library")
+
+set_property(CACHE AUTK_DRIVER PROPERTY STRINGS ${AUTK_ALL_DRIVERS})
+
+if(NOT AUTK_DRIVER)
+    message(FATAL_ERROR "Missing AUTK_DRIVER")
+elseif(NOT AUTK_DRIVER IN_LIST AUTK_ALL_DRIVERS)
+    message(FATAL_ERROR "Invalid AUTK_DRIVER: ${AUTK_DRIVER}")
+endif()
 
 #
 # Set common compiler flags.

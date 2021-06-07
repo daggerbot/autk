@@ -15,8 +15,6 @@
 #ifndef AUTK_EXTERNAL_ICONV_H_INCLUDED
 #define AUTK_EXTERNAL_ICONV_H_INCLUDED
 
-#include "autk/string.h"
-
 #include <cerrno>
 #include <cstring>
 #include <memory>
@@ -24,6 +22,8 @@
 #include <type_traits>
 
 #include <iconv.h>
+
+#include "autk/string.h"
 
 namespace autk {
 

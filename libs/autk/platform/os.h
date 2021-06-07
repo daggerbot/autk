@@ -12,13 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <windows.h>
+#ifndef AUTK_PLATFORM_OS_H_INCLUDED
+#define AUTK_PLATFORM_OS_H_INCLUDED
 
-#include "autk/main.h"
+#include "autk/config.h"
+#include "autk/types.h"
 
-using namespace autk;
+namespace autk {
 
-extern "C" int WINAPI wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int)
-{
-    return ::autk_main(__argc, __wargv);
-}
+    namespace impl {
+
+        /// Shows an error message and aborts.
+        AUTK_IMPORT [[noreturn]] void fatal(const Os_char* msg);
+
+    } // namespace impl
+
+} // namespace autk
+
+#endif // AUTK_PLATFORM_OS_H_INCLUDED

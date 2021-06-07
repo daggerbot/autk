@@ -14,11 +14,14 @@
 
 #include <windows.h>
 
-#include "autk/main.h"
+#include <cstdlib>
+
+#include "autk/platform/os.h"
 
 using namespace autk;
 
-extern "C" int WINAPI wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int)
+void impl::fatal(const Os_char* msg)
 {
-    return ::autk_main(__argc, __wargv);
+    ::MessageBoxW(nullptr, msg, L"Autk Error", MB_OK | MB_ICONERROR);
+    std::abort();
 }

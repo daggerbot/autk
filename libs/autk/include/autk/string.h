@@ -15,11 +15,11 @@
 #ifndef AUTK_STRING_H_INCLUDED
 #define AUTK_STRING_H_INCLUDED
 
-#include "autk/config.h"
-#include "autk/types.h"
-
 #include <exception>
 #include <string>
+
+#include "autk/config.h"
+#include "autk/types.h"
 
 namespace autk {
 
@@ -27,6 +27,7 @@ namespace autk {
     using Os_string_view = std::basic_string_view<Os_char>;
 
     /// Converts a UTF-8 string to the preferred encoding of the underlying OS APIs.
+    /// \throw Encoding_error if the conversion fails.
     AUTK_IMPORT Os_string to_os_string(std::u8string_view str);
 
     /// Converts a UTF-8 string to the preferred encoding of the underlying OS APIs.
@@ -34,9 +35,11 @@ namespace autk {
     AUTK_IMPORT Os_string to_os_string_lossy(std::u8string_view str);
 
     /// Converts a system narrow string to UTF-8.
+    /// \throw Encoding_error if the conversion fails.
     AUTK_IMPORT std::u8string to_utf8(std::string_view str);
 
     /// Converts a system wide string to UTF-8.
+    /// \throw Encoding_error if the conversion fails.
     AUTK_IMPORT std::u8string to_utf8(std::wstring_view str);
 
     /// Converts a system narrow string to UTF-8.

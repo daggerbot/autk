@@ -13,13 +13,20 @@
 # limitations under the License.
 
 set(AUTK_SOURCES
+    "driver/display.cpp"
+    "application.cpp"
     "object.cpp"
     "string.cpp"
 )
+set(AUTK_DRIVER_SOURCES_WIN32
+    "driver/win32/display.cpp"
+)
 set(AUTK_PLATFORM_SOURCES_WIN32
+    "platform/win32/os.cpp"
     "platform/win32/string.cpp"
 )
 set(AUTK_PLATFORM_SOURCES_UNIX
+    "platform/unix/os.cpp"
     "platform/unix/string.cpp"
 )
 
@@ -43,6 +50,19 @@ elseif(UNIX)
     list(APPEND AUTK_SOURCES ${AUTK_PLATFORM_SOURCES_UNIX})
 else()
     message(FATAL_ERROR "Unsupported platform: ${CMAKE_SYSTEM_NAME}")
+endif()
+
+#
+# Configure GUI driver.
+#
+
+if(AUTK_DRIVER STREQUAL "WIN32")
+    if(NOT CMAKE_SYSTEM_NAME STREQUAL "Windows")
+        message(FATAL_ERROR "AUTK_DRIVER=WIN32 is only supported on Windows")
+    endif()
+    list(APPEND AUTK_SOURCES ${AUTK_DRIVER_SOURCES_WIN32})
+else()
+    message(FATAL_ERROR "Unimplemented AUTK_DRIVER: ${AUTK_DRIVER}")
 endif()
 
 #

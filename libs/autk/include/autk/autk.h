@@ -15,8 +15,11 @@
 #ifndef AUTK_AUTK_H_INCLUDED
 #define AUTK_AUTK_H_INCLUDED
 
+#include "autk/application.h"
+#include "autk/concepts.h"
 #include "autk/config.h"
 #include "autk/object.h"
+#include "autk/signal.h"
 #include "autk/string.h"
 #include "autk/types.h"
 

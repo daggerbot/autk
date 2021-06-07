@@ -18,5 +18,6 @@ using namespace autk;
 
 int autk_main(int, const Os_char* const[])
 {
+    Application app{};
     return 0;
 }

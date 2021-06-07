@@ -12,13 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <windows.h>
+#include <stdexcept>
 
-#include "autk/main.h"
+#include "autk/driver/win32/display.h"
 
 using namespace autk;
+using namespace autk::impl;
 
-extern "C" int WINAPI wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int)
+Win32_display_driver::Win32_display_driver(This_thread_t)
 {
-    return ::autk_main(__argc, __wargv);
+    // Make sure a driver is only ever constructed once per thread.
+    static thread_local Win32_display_driver* thread_driver = this;
+    if (thread_driver != this) {
+        throw std::logic_error{"Display driver already created for the calling thread"};
+    }
+}
+
+Win32_display_driver::~Win32_display_driver()
+{
 }

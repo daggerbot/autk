@@ -12,13 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <windows.h>
+#ifndef AUTK_CONCEPTS_H_INCLUDED
+#define AUTK_CONCEPTS_H_INCLUDED
 
-#include "autk/main.h"
+#include <type_traits>
 
-using namespace autk;
+namespace autk {
 
-extern "C" int WINAPI wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int)
-{
-    return ::autk_main(__argc, __wargv);
-}
+    class Object;
+
+    /// Concept for types derived from Object.
+    template<typename T>
+    concept Any_object = std::is_base_of_v<Object, T>;
+
+    /// Concept for types that are suitable as signal arguments.
+    template<typename T>
+    concept Signal_arg = std::is_trivially_copyable_v<T> || std::is_reference_v<T>;
+
+} // namespace autk
+
+#endif // AUTK_CONCEPTS_H_INCLUDED

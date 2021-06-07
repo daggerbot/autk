@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autk/platform/string.h"
+#include <windows.h>
 
 #include <system_error>
 
-#include <windows.h>
+#include "autk/platform/string.h"
 
 using namespace autk;
 using namespace autk::impl;

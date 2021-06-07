@@ -12,13 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <windows.h>
+#include <err.h>
 
-#include "autk/main.h"
+#include <cstdlib>
+
+#include "autk/platform/os.h"
 
 using namespace autk;
 
-extern "C" int WINAPI wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int)
+void impl::fatal(const Os_char* msg)
 {
-    return ::autk_main(__argc, __wargv);
+    ::warnx("autk: %s", msg);
+    std::abort();
 }

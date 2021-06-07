@@ -12,9 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autk/external/iconv.h"
-
 #include <cstring>
+
+#include <iconv.h>
+
+#include "autk/external/iconv.h"
 
 using namespace autk;
 using namespace autk::impl;

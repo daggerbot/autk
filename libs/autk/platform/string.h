@@ -15,14 +15,14 @@
 #ifndef AUTK_PLATFORM_STRING_H_INCLUDED
 #define AUTK_PLATFORM_STRING_H_INCLUDED
 
-#include "autk/string.h"
-#include "autk/types.h"
-
 #include <climits>
 #include <array>
 #include <limits>
 #include <optional>
 #include <type_traits>
+
+#include "autk/string.h"
+#include "autk/types.h"
 
 namespace autk {
 
