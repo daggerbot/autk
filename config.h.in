@@ -1,0 +1,33 @@
+/*
+ * Copyright (c) 2021 Marty Mills <daggerbot@gmail.com>
+ *
+ * This software is subject to the terms of the Boost Software License version
+ * 1.0. See the included LICENSE file for more information. If you did not
+ * receive a copy of the license, see <https://www.boost.org/LICENSE_1_0.txt>.
+ */
+
+#ifndef AUTK_CONFIG_H_INCLUDED
+#define AUTK_CONFIG_H_INCLUDED
+
+#define AUTK_VERSION "@PROJECT_VERSION@"
+#define AUTK_VERSION_MAJOR @PROJECT_VERSION_MAJOR@
+#define AUTK_VERSION_MINOR @PROJECT_VERSION_MINOR@
+#define AUTK_VERSION_PATCH @PROJECT_VERSION_PATCH@
+
+#define AUTK_DRIVER_WIN32 101
+#define AUTK_DRIVER_COCOA 102
+#define AUTK_DRIVER_X11 103
+#define AUTK_DRIVER_WAYLAND 104
+
+#define AUTK_DRIVER AUTK_DRIVER_@AUTK_DRIVER@
+#define AUTK_SHARED @AUTK_SHARED@
+
+#ifndef AUTK
+# if AUTK_SHARED && defined(_WIN32)
+#  define AUTK __declspec(dllimport)
+# else
+#  define AUTK
+# endif
+#endif
+
+#endif // AUTK_CONFIG_H_INCLUDED
