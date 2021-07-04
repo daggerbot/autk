@@ -58,7 +58,7 @@ namespace autk {
     };
 
     /// Top-level window type.
-    class AUTK Window : private impl::Window_driver_listener {
+    class AUTK Window : impl::Window_driver_listener {
         friend class Main_window;
 
     public:

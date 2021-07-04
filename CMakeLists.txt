@@ -10,6 +10,7 @@ project("autk" VERSION "0.0.0" LANGUAGES CXX)
 include("GNUInstallDirs")
 
 set(OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/bin")
+set(PROJECT_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
 
 #
 # Configure build options.
@@ -120,9 +121,4 @@ if(AUTK_DEMOS)
     add_subdirectory("demos/widget_demo")
 endif()
 
-#
-# Build documentation.
-#
-
-configure_file("Doxyfile.in" "Doxyfile" @ONLY)
-add_custom_target("docs" COMMAND ${DOXYGEN} "Doxyfile")
+add_subdirectory("docs")
