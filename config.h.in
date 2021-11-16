@@ -1,0 +1,59 @@
+/*
+ * Copyright (c) Martin Mills <daggerbot@gmail.com>
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+
+#ifndef AUTK_CONFIG_H_INCLUDED
+#define AUTK_CONFIG_H_INCLUDED
+
+// Autk header version
+#define AUTK_VERSION_MAJOR @PROJECT_VERSION_MAJOR@
+#define AUTK_VERSION_MINOR @PROJECT_VERSION_MINOR@
+#define AUTK_VERSION_PATCH @PROJECT_VERSION_PATCH@
+
+// Build flags
+#define AUTK_DISPLAY_WAYLAND @AUTK_DISPLAY_WAYLAND@
+#define AUTK_DISPLAY_X11 @AUTK_DISPLAY_X11@
+#define AUTK_SHARED @AUTK_SHARED@
+#define AUTK_UNIX @AUTK_UNIX@
+
+//==============================================================================
+// Linkage macros
+//==============================================================================
+
+#ifndef AUTK_CORE
+# define AUTK_CORE AUTK_IMPORT
+#endif
+
+#ifndef AUTK_DISPLAY
+# define AUTK_DISPLAY AUTK_IMPORT
+#endif
+
+#ifndef AUTK_EXPORT
+# if AUTK_SHARED && defined(_WIN32)
+#  define AUTK_EXPORT __declspec(dllexport)
+# else
+#  define AUTK_EXPORT
+# endif
+#endif
+
+#ifndef AUTK_HIDDEN
+# if defined(__GNUC__) && !defined(_WIN32)
+#  define AUTK_HIDDEN __attribute__((__visibility__("hidden")))
+# else
+#  define AUTK_HIDDEN
+# endif
+#endif
+
+#ifndef AUTK_IMPORT
+# if AUTK_SHARED && defined(_WIN32)
+#  define AUTK_IMPORT __declspec(dllimport)
+# else
+#  define AUTK_IMPORT
+# endif
+#endif
+
+#endif // AUTK_CONFIG_H_INCLUDED
