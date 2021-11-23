@@ -10,7 +10,6 @@ set(DISPLAY_SOURCES
 )
 set(DISPLAY_SOURCES_X11
     "x11/context.cpp"
-    "x11/error.cpp"
     "x11/library.cpp"
 )
 

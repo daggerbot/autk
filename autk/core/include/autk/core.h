@@ -15,10 +15,16 @@
 #include <autk/config.h>
 
 #include "core/concepts.h"
+#include "core/convert.h"
 #include "core/dynamic_library.h"
+#include "core/encoding.h"
+#include "core/exception.h"
+#include "core/iterator.h"
 #include "core/object.h"
 #include "core/signals.h"
 #include "core/types.h"
+#include "core/unicode.h"
+#include "core/utf.h"
 #include "core/utility.h"
 #include "core/vec.h"
 

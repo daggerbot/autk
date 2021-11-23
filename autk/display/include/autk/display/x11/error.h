@@ -9,10 +9,7 @@
 #ifndef AUTK_DISPLAY_X11_ERROR_H_INCLUDED
 #define AUTK_DISPLAY_X11_ERROR_H_INCLUDED
 
-#include <stdexcept>
-#include <string>
-
-#include <autk/core/types.h>
+#include <autk/core/exception.h>
 
 namespace autk {
 
@@ -20,14 +17,16 @@ namespace autk {
     /// @{
 
     /// Exception raised when an X11 library or protocol error occurs.
-    class AUTK_DISPLAY X11Error : public std::runtime_error {
+    class AUTK_DISPLAY X11Error : public RuntimeError {
     public:
-        X11Error(const X11Error& other) noexcept;
-        explicit X11Error(const char* what_arg);
-        explicit X11Error(const std::string& what_arg);
-        ~X11Error();
+        X11Error(const X11Error& other) noexcept = default;
 
-        X11Error& operator=(const X11Error& other) noexcept;
+        explicit X11Error(std::string&& what_arg)
+            : RuntimeError{std::move(what_arg)}
+        {
+        }
+
+        X11Error& operator=(const X11Error& other) noexcept = default;
     };
 
     /// @}

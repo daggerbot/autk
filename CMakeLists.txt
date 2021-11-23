@@ -21,6 +21,7 @@ set(AUTK_DISPLAY ON CACHE BOOL "Build AutkDisplay")
 set(AUTK_DISPLAY_WAYLAND "AUTO" CACHE STRING "Enable Wayland support for AutkDisplay")
 set(AUTK_DISPLAY_X11 "AUTO" CACHE STRING "Enable X11 support for AutkDisplay")
 set(AUTK_DOXYGEN "doxygen" CACHE STRING "Doxygen command for building API documentation")
+set(AUTK_ICONV ON CACHE BOOL "Build with libiconv support (Unix only)")
 set(AUTK_INSTALL_CONFIG_INCLUDE_DIR "${CMAKE_INSTALL_INCLUDEDIR}")
 set(AUTK_PIC OFF CACHE BOOL "Build Autk with -fPIC (only if AUTK_SHARED)")
 set(AUTK_SHARED OFF CACHE BOOL "Build Autk as a set of shared libraries")
@@ -76,6 +77,7 @@ set(UNIX_SYSTEM_NAMES
 if(CMAKE_SYSTEM_NAME IN_LIST UNIX_SYSTEM_NAMES)
     set(AUTK_UNIX 1)
 else()
+    set(AUTK_ICONV OFF)
     set(AUTK_UNIX 0)
 endif()
 
@@ -102,6 +104,9 @@ if(AUTK_DISPLAY)
 endif()
 
 if(AUTK_DEMOS)
+    if(NOT AUTK_DISPLAY)
+        message(FATAL_ERROR "AUTK_DEMOS requires AUTK_DISPLAY")
+    endif()
     add_subdirectory("demos/hello_world")
 endif()
 
@@ -115,6 +120,7 @@ add_subdirectory("docs")
 set(CONFIG_FLAGS
     AUTK_DISPLAY_WAYLAND
     AUTK_DISPLAY_X11
+    AUTK_ICONV
     AUTK_SHARED
 )
 

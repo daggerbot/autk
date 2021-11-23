@@ -62,6 +62,15 @@ namespace autk {
     template<typename R, typename T, typename...Args>
     using MemberFunctionPointer = R (T::*)(Args...);
 
+    /// Convenient base for uninstantiable types.
+    struct NoInstance {
+        NoInstance() = delete;
+        NoInstance(NoInstance&&) = delete;
+        NoInstance(const NoInstance&) = delete;
+        NoInstance& operator=(NoInstance&&) = delete;
+        NoInstance& operator=(const NoInstance&) = delete;
+    };
+
     /// @}
 
 } // namespace autk
