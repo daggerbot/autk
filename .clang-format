@@ -1,0 +1,31 @@
+---
+Language: Cpp
+Standard: c++11
+AllowShortFunctionsOnASingleLine: None
+AttributeMacros:
+  - AUTK_FMT
+  - AUTK_VFMT
+BasedOnStyle: LLVM
+BraceWrapping:
+  AfterCaseLabel: false
+  AfterControlStatement: MultiLine
+  AfterEnum: false
+  AfterExternBlock: false
+  AfterFunction: true
+  AfterStruct: false
+  AfterUnion: false
+  BeforeElse: false
+  BeforeWhile: false
+  IndentBraces: false
+  SplitEmptyFunction: true
+  SplitEmptyRecord: false
+BreakAfterReturnType: All
+BreakBeforeBinaryOperators: NonAssignment
+BreakBeforeBraces: Custom
+ColumnLimit: 100
+IndentCaseLabels: true
+IndentPPDirectives: AfterHash
+IndentWidth: 4
+NamespaceIndentation: All
+PPIndentWidth: 1
+---

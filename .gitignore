@@ -1,0 +1,8 @@
+# Ignore dotfiles unless explicitly included
+.*
+!.gitignore
+!/.clang-format
+
+# Ignore build directory
+/build/
+/out/

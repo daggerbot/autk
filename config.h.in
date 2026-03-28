@@ -1,0 +1,115 @@
+/*
+ * Copyright (c) 2026 Martin Mills
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+#ifndef AUTK_CONFIG_H_
+#define AUTK_CONFIG_H_
+
+#cmakedefine01 AUTK_CLIENT_MACOS
+#cmakedefine01 AUTK_CLIENT_WAYLAND
+#cmakedefine01 AUTK_CLIENT_WINDOWS
+#cmakedefine01 AUTK_CLIENT_X11
+#cmakedefine01 AUTK_SHARED
+
+#if AUTK_SHARED && defined(_WIN32)
+# define AUTK_IMPORT __declspec(dllimport)
+# define AUTK_EXPORT __declspec(dllexport)
+#else
+# define AUTK_IMPORT
+# define AUTK_EXPORT
+#endif
+
+#ifndef AUTK_API
+# define AUTK_API AUTK_IMPORT
+#endif
+
+#if defined(__GNUC__) && !defined(_WIN32)
+# define AUTK_HIDDEN __attribute__((visibility("hidden")))
+#else
+# define AUTK_HIDDEN
+#endif
+
+#ifdef __cplusplus
+# define AUTK_BEGIN_DECLS extern "C" {
+# define AUTK_END_DECLS }
+#else
+# define AUTK_BEGIN_DECLS
+# define AUTK_END_DECLS
+#endif
+
+#ifdef __GNUC__
+# define AUTK_FMT(f, v) __attribute__((format(printf, f, v)))
+# define AUTK_VFMT(f, v) __attribute__((format(printf, f, 0)))
+#else
+# define AUTK_FMT(f, v)
+# define AUTK_VFMT(f, v)
+#endif
+
+#if (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 202311L)                                     \
+    || (defined(__cplusplus) && __cplusplus >= 201103L)
+# define AUTK_ALIGNAS(n) alignas(n)
+# define AUTK_ALIGNOF(n) alignof(n)
+#elif defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
+# define AUTK_ALIGNAS(n) _Alignas(n)
+# define AUTK_ALIGNOF(n) _Alignof(n)
+#elif defined(__GNUC__)
+# define AUTK_ALIGNAS(n) __attribute__((aligned(n)))
+# define AUTK_ALIGNOF(n) __alignof__(n)
+#elif defined(_MSC_VER)
+# define AUTK_ALIGNAS(n) __declspec(align(n))
+# define AUTK_ALIGNOF(n) __alignof(n)
+#endif
+
+#ifdef __GNUC__
+# define AUTK_ALWAYS_INLINE __attribute__((always_inline)) inline
+#elif defined(_MSC_VER)
+# define AUTK_ALWAYS_INLINE __forceinline
+#else
+# define AUTK_ALWAYS_INLINE inline
+#endif
+
+#if (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 202311L)                                     \
+    || (defined(__cplusplus) && __cplusplus >= 201703L)
+# define AUTK_NODISCARD [[nodiscard]]
+#elif defined(__GNUC__)
+# define AUTK_NODISCARD __attribute__((warn_unused_result))
+#elif defined(_MSC_VER)
+# define AUTK_NODISCARD _Check_return_
+#else
+# define AUTK_NODISCARD
+#endif
+
+#if (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 202311L)                                     \
+    || (defined(__cplusplus) && __cplusplus >= 201103L)
+# define AUTK_NORETURN [[noreturn]]
+#elif defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
+# define AUTK_NORETURN _Noreturn
+#elif defined(__GNUC__)
+# define AUTK_NORETURN __attribute__((noreturn))
+#elif defined(_MSC_VER)
+# define AUTK_NORETURN __declspec(noreturn)
+#else
+# define AUTK_NORETURN
+#endif
+
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
+# define AUTK_RESTRICT restrict
+#elif defined(__GNUC__) || defined(_MSC_VER)
+# define AUTK_RESTRICT __restrict
+#else
+# define AUTK_RESTRICT
+#endif
+
+#endif /* AUTK_CONFIG_H_ */
