@@ -19,15 +19,21 @@
 
 #include "types.h"
 
+#define AUTK_WINDOW_FALLBACK_WIDTH 640
+#define AUTK_WINDOW_FALLBACK_HEIGHT 480
+
 /// \see \ref autk_window_create_flags
 typedef uint32_t autk_window_create_flags_t;
 enum autk_window_create_flags {
-    /// By default, if `x` and `y` are both zero, the window will be created at a default position
-    /// at the window system's discretion. Setting this flag forces the window to be created at the
-    /// specified `x` and `y` coordinates even if they are zero.
-    AUTK_WINDOW_CREATE_FLAGS_EXPLICIT_POSITION = 1 << 0,
+    /// An explicit position is provided in the create params. If this flag is not set, the window
+    /// system will choose a position for the window.
+    AUTK_WINDOW_CREATE_FLAGS_POSITION = 1 << 0,
+    /// An explicit size is provided in the create params. If this flag is not set, the window
+    /// system will choose a size for the window.
+    AUTK_WINDOW_CREATE_FLAGS_SIZE = 1 << 1,
 
-    AUTK_WINDOW_CREATE_FLAGS_ALL = AUTK_WINDOW_CREATE_FLAGS_EXPLICIT_POSITION,
+    AUTK_WINDOW_CREATE_FLAGS_ALL =
+        AUTK_WINDOW_CREATE_FLAGS_POSITION | AUTK_WINDOW_CREATE_FLAGS_SIZE,
     AUTK_WINDOW_CREATE_FLAGS_32BIT_ = 0x7FFFFFFF,
 };
 

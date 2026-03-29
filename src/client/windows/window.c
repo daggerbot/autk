@@ -14,11 +14,13 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <assert.h>
 #include <limits.h>
 #include <windows.h>
 
 #include <autk/diagnostics.h>
 
+#include "../../encoding.h"
 #include "../../impl_math.h"
 #include "../../impl_types.h"
 #include "../../platform/windows/system.h"
@@ -71,6 +73,9 @@ autk_windows_window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 //==============================================================================
 
 static autk_status_t
+autk_windows_window_set_title(autk_window_t *window, void *opaque_window_data, const char *title);
+
+static autk_status_t
 autk_windows_window_init(autk_window_t *window, void *opaque_window_data,
                          const autk_window_create_params_t *params)
 {
@@ -99,14 +104,13 @@ autk_windows_window_init(autk_window_t *window, void *opaque_window_data,
             return AUTK_ERR_INVALID_ARGUMENT;
     }
 
-    // Determine the final position of the window.
-    if (params->x || params->y || (params->flags & AUTK_WINDOW_CREATE_FLAGS_EXPLICIT_POSITION)) {
+    // Handle explicit window position.
+    if (params->flags & AUTK_WINDOW_CREATE_FLAGS_POSITION) {
         x = params->x;
         y = params->y;
     }
 
-    // Determine the final size of the window.
-    if (params->width || params->height) {
+    if (params->flags & AUTK_WINDOW_CREATE_FLAGS_SIZE) {
         RECT rect = {0, 0, (int)autk_uint32_clamp(params->width, 1, INT_MAX),
                      (int)autk_uint32_clamp(params->height, 1, INT_MAX)};
 
@@ -140,6 +144,11 @@ autk_windows_window_init(autk_window_t *window, void *opaque_window_data,
         }
     }
 
+    // It's much simpler to set the title after creation than to duplicate that logic here.
+    if (params->title) {
+        AUTK_TRY(autk_windows_window_set_title(window, opaque_window_data, params->title));
+    }
+
     return AUTK_OK;
 }
 
@@ -155,6 +164,55 @@ autk_windows_window_fini(autk_window_t *window, void *opaque_window_data)
         hwnd = window_data->hwnd;
         window_data->hwnd = NULL; // Prevent calling `callbacks->invalidated`.
         DestroyWindow(hwnd);
+    }
+}
+
+typedef struct {
+    autk_instance_t *instance;
+    HWND hwnd;
+    autk_status_t status;
+} set_title_context_t;
+
+static void
+set_title_utf16(void *opaque_ctx, const uint16_t *title, size_t len)
+{
+    static_assert(sizeof(wchar_t) == sizeof(uint16_t), "");
+
+    set_title_context_t *ctx = opaque_ctx;
+    char errbuf[256];
+
+    (void)len;
+
+    if (!SetWindowTextW(ctx->hwnd, (LPCWSTR)title)) {
+        AUTK_ERROR(ctx->instance, "SetWindowTextW failed: %s",
+                   autk_windows_error_to_string(GetLastError(), errbuf, sizeof(errbuf)));
+        ctx->status = AUTK_ERR_RUNTIME_FAILURE;
+    }
+}
+
+static autk_status_t
+autk_windows_window_set_title(autk_window_t *window, void *opaque_window_data, const char *title)
+{
+    autk_windows_window_data_t *window_data = opaque_window_data;
+    autk_status_t status;
+    set_title_context_t ctx = {
+        .instance = window->instance,
+        .hwnd = window_data->hwnd,
+        .status = AUTK_OK,
+    };
+
+    if (!window_data->hwnd) {
+        return AUTK_ERR_RESOURCE_LOST;
+    }
+
+    status = autk_with_utf8_to_utf16(window->instance, title, -1, &ctx, &set_title_utf16,
+                                     AUTK_ENCODING_FLAGS_LOSSY
+                                         | AUTK_ENCODING_FLAGS_TRUNCATE_ON_ALLOC_FAILURE);
+
+    if (status == AUTK_OK) {
+        return ctx.status;
+    } else {
+        return status;
     }
 }
 
@@ -180,5 +238,6 @@ AUTK_HIDDEN const autk_window_driver_t autk_window_driver_windows = {
 
     .init = &autk_windows_window_init,
     .fini = &autk_windows_window_fini,
+    .set_title = &autk_windows_window_set_title,
     .set_visible = &autk_windows_window_set_visible,
 };

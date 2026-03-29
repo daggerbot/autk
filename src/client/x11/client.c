@@ -14,6 +14,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -256,11 +257,42 @@ handle_client_message(autk_x11_client_data_t *client_data, const xcb_client_mess
 }
 
 static autk_status_t
-handle_xcb_event(autk_x11_client_data_t *client_data, const xcb_generic_event_t *event)
+handle_xcb_error(autk_client_t *client, autk_x11_client_data_t *client_data,
+                 const xcb_generic_error_t *error)
+{
+    autk_window_t *window;
+
+    (void)client_data;
+
+    // Report the raw error data.
+    AUTK_ERROR(client->instance, "X11 error: code=%u rid=%" PRIu32 " major=%u minor=%u seq=%u",
+               error->error_code, error->resource_id, error->major_code, error->minor_code,
+               error->sequence);
+
+    // If the error is failed window creation, invalidate the window so we don't keep making
+    // requests with an invalid window ID.
+    if (error->major_code == XCB_CREATE_WINDOW) {
+        window = autk_x11_window_map_get(&client_data->window_map, error->resource_id);
+        if (window) {
+            AUTK_ERROR(client->instance, "X11 window creation failed for window id=%" PRIu32,
+                       error->resource_id);
+            autk_x11_window_invalidate(window->driver_data);
+        }
+    }
+
+    return AUTK_OK;
+}
+
+static autk_status_t
+handle_xcb_event(autk_client_t *client, autk_x11_client_data_t *client_data,
+                 const xcb_generic_event_t *event)
 {
     autk_window_t *window;
 
     switch (event->response_type & ~0x80) {
+        case 0:
+            return handle_xcb_error(client, client_data, (const xcb_generic_error_t *)event);
+
         case XCB_CLIENT_MESSAGE:
             return handle_client_message(client_data, (const xcb_client_message_event_t *)event);
 
@@ -334,7 +366,7 @@ autk_x11_client_run(autk_client_t *client, void *opaque_client_data)
         // Check for any pending display events.
         if (display_result == 1) {
             while ((event = xcb_poll_for_event(client_data->connection)) != NULL) {
-                status = handle_xcb_event(client_data, event);
+                status = handle_xcb_event(client, client_data, event);
                 free(event);
                 if (status != AUTK_OK) {
                     return status;

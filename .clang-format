@@ -1,11 +1,22 @@
 ---
+
 Language: Cpp
-Standard: c++11
+Standard: c++11 # Actually C11, but that's not an option.
+
+AlignTrailingComments:
+  Kind: Never
 AllowShortFunctionsOnASingleLine: None
-AttributeMacros:
-  - AUTK_FMT
-  - AUTK_VFMT
 BasedOnStyle: LLVM
+BreakAfterReturnType: All
+BreakBeforeBinaryOperators: NonAssignment
+BreakBeforeBraces: Custom
+ColumnLimit: 100
+IndentCaseLabels: true
+IndentPPDirectives: AfterHash
+IndentWidth: 4
+NamespaceIndentation: All
+PPIndentWidth: 1
+
 BraceWrapping:
   AfterCaseLabel: false
   AfterControlStatement: MultiLine
@@ -19,13 +30,9 @@ BraceWrapping:
   IndentBraces: false
   SplitEmptyFunction: true
   SplitEmptyRecord: false
-BreakAfterReturnType: All
-BreakBeforeBinaryOperators: NonAssignment
-BreakBeforeBraces: Custom
-ColumnLimit: 100
-IndentCaseLabels: true
-IndentPPDirectives: AfterHash
-IndentWidth: 4
-NamespaceIndentation: All
-PPIndentWidth: 1
+
+AttributeMacros:
+  - AUTK_FMT
+  - AUTK_VFMT
+
 ---

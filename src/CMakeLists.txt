@@ -21,6 +21,7 @@ endif()
 target_sources(autk PRIVATE
     client.c
     diagnostics.c
+    encoding.c
     hash.c
     instance.c
     os_compat.c

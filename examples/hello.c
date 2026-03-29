@@ -28,11 +28,11 @@ main(int argc, char *argv[])
 {
     static const autk_instance_create_params_t instance_params = {
         .struct_size = sizeof(autk_instance_create_params_t),
-        .message_func = &autk_stderr_message,
+        .message_func = &autk_stderr_message, // print messages to stderr
     };
     static const autk_window_callbacks_t window_callbacks = {
         .struct_size = sizeof(autk_window_callbacks_t),
-        .close_requested = &autk_window_callback_quit,
+        .close_requested = &autk_window_callback_quit, // quit the app when the window is closed
     };
     static const autk_window_create_params_t window_params = {
         .struct_size = sizeof(autk_window_create_params_t),

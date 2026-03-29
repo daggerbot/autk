@@ -25,7 +25,16 @@
 #include "../../platform/unix/job_queue.h"
 #include "window.h"
 
-#define AUTK_FOR_EACH_X11_ATOM(m) m(WM_DELETE_WINDOW) m(WM_PROTOCOLS)
+// Declare all non-standard atoms that we'll be using. This allows us to avoid having to look them
+// up by name at runtime.
+/* clang-format off */
+#define AUTK_FOR_EACH_X11_ATOM(m)                                                                  \
+    m(UTF8_STRING)                                                                                 \
+    m(WM_DELETE_WINDOW)                                                                            \
+    m(WM_PROTOCOLS)                                                                                \
+    m(_NET_WM_ICON_NAME)                                                                           \
+    m(_NET_WM_NAME)
+/* clang-format on */
 
 typedef struct autk_x11_atoms {
 #define AUTK_DO(name) uint32_t atom_##name;

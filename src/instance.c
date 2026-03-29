@@ -197,7 +197,7 @@ autk_instance_message_v(const autk_instance_t *instance, autk_message_severity_t
 
     /* The stack buffer is too small. Fall back to a heap buffer. */
     buf_size = (size_t)result + 1;
-    heap_buf = autk_instance_alloc(instance, NULL, 0, buf_size, AUTK_MEMORY_TAG_MESSAGE);
+    heap_buf = autk_instance_alloc(instance, NULL, 0, buf_size, AUTK_MEMORY_TAG_STRING);
     if (!heap_buf) {
         /* Out of memory. Reporting a partial message is better than nothing. */
         autk_instance_message(instance, severity, module_name, location, stack_buf);
@@ -214,7 +214,7 @@ autk_instance_message_v(const autk_instance_t *instance, autk_message_severity_t
         autk_instance_message(instance, severity, module_name, location, heap_buf);
     }
 
-    autk_instance_alloc(instance, heap_buf, buf_size, 0, AUTK_MEMORY_TAG_MESSAGE);
+    autk_instance_alloc(instance, heap_buf, buf_size, 0, AUTK_MEMORY_TAG_STRING);
     return true;
 }
 

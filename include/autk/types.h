@@ -35,8 +35,8 @@ typedef enum autk_memory_tag {
     AUTK_MEMORY_TAG_CLIENT,
     AUTK_MEMORY_TAG_HASH,
     AUTK_MEMORY_TAG_INSTANCE,
-    AUTK_MEMORY_TAG_MESSAGE,
     AUTK_MEMORY_TAG_QUEUE,
+    AUTK_MEMORY_TAG_STRING,
     AUTK_MEMORY_TAG_WINDOW,
 } autk_memory_tag_t;
 
@@ -62,7 +62,9 @@ typedef enum autk_status {
     m(AUTK_ERR_DATA_CORRUPTION, "Data corruption detected") \
     m(AUTK_ERR_INVALID_ARGUMENT, "Invalid argument") \
     m(AUTK_ERR_INVALID_CONFIGURATION, "Invalid configuration") \
+    m(AUTK_ERR_INVALID_STRING_ENCODING, "Invalid string encoding") \
     m(AUTK_ERR_INVALID_STRUCT_SIZE, "Invalid struct size") \
+    m(AUTK_ERR_INSUFFICIENT_BUFFER, "Insufficient buffer size") \
     m(AUTK_ERR_INTERRUPTED, "Operation interrupted") \
     m(AUTK_ERR_IO_FAILURE, "I/O failure") \
     m(AUTK_ERR_OUT_OF_MEMORY, "Out of memory") \
