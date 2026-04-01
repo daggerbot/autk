@@ -19,49 +19,6 @@
 
 #include "types.h"
 
-struct autk_window_driver;
-
-typedef struct autk_client_create_params autk_client_create_params_t;
-typedef struct autk_client_driver autk_client_driver_t;
-
-struct autk_client_create_params {
-    /// Size of this struct. Must be `sizeof(autk_client_create_params_t)`.
-    size_t struct_size;
-    /// Pointer to the client driver to use, or `NULL` to use the default driver.
-    const autk_client_driver_t *driver;
-    /// Display name used by the X11 and Wayland drivers when opening a connection to the display
-    /// server.
-    const char *display_name;
-    /// Pointer to additional data that a custom driver may use when initializing the client. All
-    /// built-in drivers ignore this.
-    void *driver_init_ctx;
-    /// Number of bytes to allocate for application use.
-    size_t user_data_size;
-    /// Pointer to the initial value of the user data region. If `NULL`, the user data is zeroed.
-    const void *user_data_init;
-};
-
-struct autk_client_driver {
-    /// Size of this struct. Must be `sizeof(autk_client_driver_t)`.
-    size_t struct_size;
-    /// Number of bytes to allocate for driver use.
-    size_t driver_data_size;
-
-    const struct autk_window_driver *window_driver;
-
-    /// Function called to initialize the client's driver data after is it allocated.
-    autk_status_t (*init)(autk_client_t *client, void *driver_data,
-                          const autk_client_create_params_t *params);
-    /// Function called to clean up the client's driver data.
-    void (*fini)(autk_client_t *client, void *driver_data);
-    autk_status_t (*run)(autk_client_t *client, void *driver_data);
-    autk_status_t (*push_job)(autk_client_t *client, void *driver_data, autk_job_t job, bool block,
-                              bool *queued);
-    autk_status_t (*quit)(autk_client_t *client, void *driver_data);
-
-    // more later
-};
-
 AUTK_API extern const autk_client_driver_t autk_client_driver_x11;
 AUTK_API extern const autk_client_driver_t autk_client_driver_wayland;
 AUTK_API extern const autk_client_driver_t autk_client_driver_windows;

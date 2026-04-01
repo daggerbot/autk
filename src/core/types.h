@@ -14,12 +14,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef AUTK_IMPL_TYPES_H_
-#define AUTK_IMPL_TYPES_H_
+#ifndef AUTK_CORE_TYPES_H_
+#define AUTK_CORE_TYPES_H_
 
-#include <autk/client.h>
-#include <autk/instance.h>
-#include <autk/window.h>
+#include <autk/types.h>
 
 struct autk_client {
     const autk_client_driver_t *driver;
@@ -51,4 +49,4 @@ struct autk_window {
     void *user_data;
 };
 
-#endif // AUTK_IMPL_TYPES_H_
+#endif // AUTK_CORE_TYPES_H_

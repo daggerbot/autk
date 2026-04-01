@@ -14,29 +14,22 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef AUTK_CLIENT_X11_WINDOW_H_
-#define AUTK_CLIENT_X11_WINDOW_H_
+#ifndef AUTK_CLIENT_WINDOWS_TYPES_H_
+#define AUTK_CLIENT_WINDOWS_TYPES_H_
 
-#include "types.h"
+#include <windows.h>
 
-AUTK_HIDDEN extern const autk_window_driver_t autk_window_driver_x11;
+#include <core/types.h>
 
-AUTK_HIDDEN void
-autk_x11_window_invalidate(autk_window_t *window);
+typedef struct autk_windows_client_data autk_windows_client_data_t;
+typedef struct autk_windows_window_data autk_windows_window_data_t;
 
-AUTK_HIDDEN void
-autk_x11_window_map_init(autk_instance_t *instance, autk_x11_window_map_t *map);
+struct autk_windows_client_data {
+    int _dummy;
+};
 
-AUTK_HIDDEN void
-autk_x11_window_map_fini(autk_x11_window_map_t *map);
+struct autk_windows_window_data {
+    HWND hwnd;
+};
 
-AUTK_HIDDEN autk_window_t *
-autk_x11_window_map_get(autk_x11_window_map_t *map, uint32_t id);
-
-AUTK_HIDDEN autk_status_t
-autk_x11_window_map_insert(autk_x11_window_map_t *map, uint32_t id, autk_window_t *window);
-
-AUTK_HIDDEN autk_window_t *
-autk_x11_window_map_remove(autk_x11_window_map_t *map, uint32_t id);
-
-#endif // AUTK_CLIENT_X11_WINDOW_H_
+#endif // AUTK_CLIENT_WINDOWS_TYPES_H_

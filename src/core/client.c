@@ -20,9 +20,8 @@
 #include <autk/client.h>
 #include <autk/diagnostics.h>
 #include <autk/instance.h>
-
-#include "impl_math.h"
-#include "impl_types.h"
+#include <core/types.h>
+#include <utility/math.h>
 
 static const autk_client_driver_t *
 choose_default_driver(const autk_instance_t *instance)

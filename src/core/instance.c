@@ -18,10 +18,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <autk/diagnostics.h>
 #include <autk/instance.h>
-
-#include "impl_math.h"
-#include "impl_types.h"
+#include <core/types.h>
+#include <utility/math.h>
 
 AUTK_API autk_status_t
 autk_instance_create(const autk_instance_create_params_t *params, autk_instance_t **out_instance)

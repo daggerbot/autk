@@ -14,8 +14,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef AUTK_ENCODING_H_
-#define AUTK_ENCODING_H_
+#ifndef AUTK_UTILITY_ENCODING_H_
+#define AUTK_UTILITY_ENCODING_H_
 
 #include <autk/types.h>
 
@@ -36,4 +36,4 @@ autk_with_utf8_to_utf16(autk_instance_t *instance, const char *in_str, int in_le
                         void (*callback)(void *ctx, const uint16_t *out_str, size_t out_len),
                         autk_encoding_flags_t flags);
 
-#endif // AUTK_ENCODING_H_
+#endif // AUTK_UTILITY_ENCODING_H_

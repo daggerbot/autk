@@ -20,7 +20,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "os_compat.h"
+#include "compat.h"
 
 AUTK_API char *
 autk_strerror_r(int errnum, char *buf, size_t buf_size)

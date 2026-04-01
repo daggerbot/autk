@@ -14,35 +14,50 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef AUTK_CLIENT_X11_CLIENT_H_
-#define AUTK_CLIENT_X11_CLIENT_H_
+#ifndef AUTK_CLIENT_X11_TYPES_H_
+#define AUTK_CLIENT_X11_TYPES_H_
 
 #include <xcb/xcb.h>
 
-#include <autk/client.h>
+#include <core/types.h>
+#include <os/posix/job_queue.h>
+#include <utility/hash.h>
 
-#include "../../impl_types.h"
-#include "../../platform/unix/job_queue.h"
-#include "window.h"
+typedef struct autk_x11_atoms autk_x11_atoms_t;
+typedef struct autk_x11_client_data autk_x11_client_data_t;
+typedef struct autk_x11_window_data autk_x11_window_data_t;
+typedef struct autk_x11_window_map autk_x11_window_map_t;
+typedef struct autk_x11_window_map_node autk_x11_window_map_node_t;
 
-// Declare all non-standard atoms that we'll be using. This allows us to avoid having to look them
-// up by name at runtime.
-/* clang-format off */
-#define AUTK_FOR_EACH_X11_ATOM(m)                                                                  \
-    m(UTF8_STRING)                                                                                 \
-    m(WM_DELETE_WINDOW)                                                                            \
-    m(WM_PROTOCOLS)                                                                                \
-    m(_NET_WM_ICON_NAME)                                                                           \
+struct autk_x11_atoms {
+    /* clang-format off */
+#define AUTK_FOR_EACH_X11_ATOM(m) \
+    m(UTF8_STRING) \
+    m(WM_DELETE_WINDOW) \
+    m(WM_PROTOCOLS) \
+    m(_NET_WM_ICON_NAME) \
     m(_NET_WM_NAME)
 /* clang-format on */
-
-typedef struct autk_x11_atoms {
 #define AUTK_DO(name) uint32_t atom_##name;
     AUTK_FOR_EACH_X11_ATOM(AUTK_DO)
 #undef AUTK_DO
-} autk_x11_atoms_t;
+};
 
-typedef struct autk_x11_client_data {
+struct autk_x11_window_data {
+    xcb_connection_t *connection;
+    uint32_t window_id;
+};
+
+struct autk_x11_window_map {
+    autk_hash_table_t ht;
+};
+
+struct autk_x11_window_map_node {
+    uint32_t id;
+    autk_window_t *window;
+};
+
+struct autk_x11_client_data {
     xcb_connection_t *connection;
     int default_screen_num;
     int display_fd;
@@ -51,8 +66,8 @@ typedef struct autk_x11_client_data {
     xcb_visualtype_t *default_visual;
     autk_x11_atoms_t atoms;
     autk_x11_window_map_t window_map;
-    autk_unix_job_queue_t *job_queue;
+    autk_posix_job_queue_t job_queue;
     bool quit_requested;
-} autk_x11_client_data_t;
+};
 
-#endif // AUTK_CLIENT_X11_CLIENT_H_
+#endif // AUTK_CLIENT_X11_TYPES_H_

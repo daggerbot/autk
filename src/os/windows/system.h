@@ -14,12 +14,12 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef AUTK_PLATFORM_WINDOWS_SYSTEM_H_
-#define AUTK_PLATFORM_WINDOWS_SYSTEM_H_
+#ifndef AUTK_OS_WINDOWS_SYSTEM_H_
+#define AUTK_OS_WINDOWS_SYSTEM_H_
 
 #include <autk/types.h>
 
 AUTK_HIDDEN char *
 autk_windows_error_to_string(DWORD error_code, char *buf, size_t buf_size);
 
-#endif // AUTK_PLATFORM_WINDOWS_SYSTEM_H_
+#endif // AUTK_OS_WINDOWS_SYSTEM_H_

@@ -19,13 +19,16 @@ else()
 endif()
 
 target_sources(autk PRIVATE
-    client.c
-    diagnostics.c
-    encoding.c
-    hash.c
-    instance.c
-    os_compat.c
-    window.c
+    core/client.c
+    core/diagnostics.c
+    core/instance.c
+    core/window.c
+
+    os/compat.c
+
+    utility/encoding.c
+    utility/hash.c
+    utility/job_queue.c
 )
 
 target_compile_definitions(autk
@@ -37,14 +40,28 @@ target_compile_definitions(autk
 
 target_include_directories(autk
     PUBLIC
-        ../include
+        "${PROJECT_SOURCE_DIR}/include"
         "${GENERATED_INCLUDE_DIR}"
+    PRIVATE
+        .
 )
 
 target_link_libraries(autk
     PRIVATE
         autk-compiler-options
 )
+
+if(WIN32)
+    target_sources(autk PRIVATE
+        os/windows/sync.c
+        os/windows/system.c
+    )
+elseif(LINUX OR BSD)
+    target_sources(autk PRIVATE
+        os/posix/job_queue.c
+        os/posix/sync.c
+    )
+endif()
 
 #===============================================================================
 #
@@ -64,7 +81,6 @@ if(AUTK_CLIENT_X11)
     target_sources(autk PRIVATE
         client/x11/client.c
         client/x11/window.c
-        platform/unix/job_queue.c
     )
 
     target_link_libraries(autk PRIVATE PkgConfig::xcb)
@@ -80,7 +96,6 @@ if(WIN32)
     target_sources(autk PRIVATE
         client/windows/client.c
         client/windows/window.c
-        platform/windows/system.c
     )
 
     target_compile_definitions(autk PRIVATE

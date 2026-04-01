@@ -19,11 +19,10 @@
 #include <windows.h>
 
 #include <autk/diagnostics.h>
+#include <os/windows/system.h>
+#include <utility/encoding.h>
+#include <utility/math.h>
 
-#include "../../encoding.h"
-#include "../../impl_math.h"
-#include "../../impl_types.h"
-#include "../../platform/windows/system.h"
 #include "window.h"
 
 //==============================================================================

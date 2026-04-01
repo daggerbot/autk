@@ -16,10 +16,12 @@
 
 #include <autk/autk.h>
 
+// Provide a handler for when `AUTK_EXPECT` fails.
 void
 autk_expect_failed(const char *expr, autk_status_t status, const char *module_name,
                    const autk_source_location_t *location)
 {
+    // Use the default behavior.
     autk_default_expect_failed(expr, status, module_name, location);
 }
 
@@ -61,6 +63,7 @@ main(int argc, char *argv[])
     AUTK_EXPECT(autk_client_run(client));
 
     // Clean up.
+    autk_window_destroy(window);
     autk_client_destroy(client);
     autk_instance_destroy(instance);
 

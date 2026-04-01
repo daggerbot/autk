@@ -14,13 +14,24 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef AUTK_CLIENT_WINDOWS_CLIENT_H_
-#define AUTK_CLIENT_WINDOWS_CLIENT_H_
+#ifndef AUTK_OS_TYPES_H_
+#define AUTK_OS_TYPES_H_
 
-#include <autk/client.h>
+#ifdef _WIN32
+# include <windows.h>
+#elif defined(__unix__)
+# include <semaphore.h>
+#endif
 
-typedef struct autk_windows_client_data {
-    int dummy;
-} autk_windows_client_data_t;
+#include <autk/types.h>
 
-#endif // AUTK_CLIENT_WINDOWS_CLIENT_H_
+typedef struct autk_semaphore {
+#ifdef _WIN32
+    HANDLE handle;
+#elif defined(__unix__)
+    sem_t handle;
+    bool was_init;
+#endif
+} autk_semaphore_t;
+
+#endif // AUTK_OS_TYPES_H_

@@ -16,10 +16,11 @@
 
 #include <string.h>
 
+#include <autk/client.h>
+#include <autk/diagnostics.h>
 #include <autk/window.h>
-
-#include "impl_math.h"
-#include "impl_types.h"
+#include <core/types.h>
+#include <utility/math.h>
 
 AUTK_API autk_status_t
 autk_window_create(autk_client_t *client, const autk_window_create_params_t *params,

@@ -14,8 +14,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef AUTK_HASH_H_
-#define AUTK_HASH_H_
+#ifndef AUTK_UTILITY_HASH_H_
+#define AUTK_UTILITY_HASH_H_
 
 #include <autk/types.h>
 
@@ -23,7 +23,10 @@ typedef uintptr_t autk_hash_t;
 typedef autk_hash_t (*autk_hash_func_t)(const void *key);
 typedef bool (*autk_hash_eq_func_t)(const void *key0, const void *key1);
 
-typedef struct autk_hash_table {
+typedef struct autk_hash_iter autk_hash_iter_t;
+typedef struct autk_hash_table autk_hash_table_t;
+
+struct autk_hash_table {
     autk_instance_t *instance; // for allocation
     size_t element_size;
     autk_hash_func_t hash_func;
@@ -33,11 +36,11 @@ typedef struct autk_hash_table {
     size_t used_count;
     size_t worst_miss;
     char *data;
-} autk_hash_table_t;
+};
 
-typedef struct autk_hash_iter {
+struct autk_hash_iter {
     size_t index;
-} autk_hash_iter_t;
+};
 
 AUTK_HIDDEN void
 autk_hash_table_init(autk_instance_t *instance, autk_hash_table_t *ht, size_t element_size,
@@ -68,4 +71,4 @@ autk_hash_table_remove(autk_hash_table_t *ht, const void *key);
 AUTK_HIDDEN void *
 autk_hash_table_remove_iter(autk_hash_table_t *ht, autk_hash_iter_t iter);
 
-#endif // AUTK_HASH_H_
+#endif // AUTK_UTILITY_HASH_H_

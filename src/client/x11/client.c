@@ -23,7 +23,6 @@
 
 #include <autk/diagnostics.h>
 
-#include "client.h"
 #include "window.h"
 
 static autk_status_t
@@ -191,7 +190,7 @@ autk_x11_client_init(autk_client_t *client, void *opaque_client_data,
 
     // Connect to the X11 server.
     client_data->connection = xcb_connect(params->display_name, &client_data->default_screen_num);
-    status = check_connection(autk_client_get_instance(client), client_data);
+    status = check_connection(client->instance, client_data);
     if (status != AUTK_OK) {
         client_data->connection = NULL; // Don't free dummy error connections.
         return status;
@@ -207,7 +206,7 @@ autk_x11_client_init(autk_client_t *client, void *opaque_client_data,
     autk_x11_window_map_init(client->instance, &client_data->window_map);
 
     // Create the job queue.
-    AUTK_TRY(autk_unix_job_queue_create(client->instance, &client_data->job_queue));
+    AUTK_TRY(autk_posix_job_queue_init(&client_data->job_queue));
 
     return AUTK_OK;
 }
@@ -219,10 +218,7 @@ autk_x11_client_fini(autk_client_t *client, void *opaque_client_data)
 
     (void)client;
 
-    if (client_data->job_queue) {
-        autk_unix_job_queue_release(client_data->job_queue);
-    }
-
+    autk_posix_job_queue_fini(&client_data->job_queue);
     autk_x11_window_map_fini(&client_data->window_map);
 
     if (client_data->connection) {
@@ -323,7 +319,7 @@ autk_x11_client_run(autk_client_t *client, void *opaque_client_data)
 
     while (!client_data->quit_requested) {
         // Execute all pending jobs before doing anything else.
-        status = autk_unix_job_queue_pop_nonblocking(client_data->job_queue, &job);
+        status = autk_posix_job_queue_try_pop(&client_data->job_queue, &job, client->instance);
         switch (status) {
             case AUTK_OK:
                 if (job.exec) {
@@ -348,8 +344,8 @@ autk_x11_client_run(autk_client_t *client, void *opaque_client_data)
         }
 
         // Block until any input is available.
-        status = autk_unix_job_queue_poll(client_data->job_queue, client_data->display_fd, -1,
-                                          &queue_result, &display_result);
+        status = autk_posix_job_queue_poll(&client_data->job_queue, client_data->display_fd, -1,
+                                           &queue_result, &display_result);
         switch (status) {
             case AUTK_OK:
                 break;

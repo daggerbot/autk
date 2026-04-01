@@ -19,13 +19,9 @@
 
 #include <windows.h>
 
-#include <autk/window.h>
+#include "types.h"
 
 #define AUTK_WINDOWS_WINDOW_CLASS_NAME L"autk_window"
-
-typedef struct autk_windows_window_data {
-    HWND hwnd;
-} autk_windows_window_data_t;
 
 AUTK_HIDDEN LRESULT CALLBACK
 autk_windows_window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam);

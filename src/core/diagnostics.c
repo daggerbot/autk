@@ -19,53 +19,54 @@
 #include <stdlib.h>
 
 #include <autk/diagnostics.h>
-
-#include "os_compat.h"
+#include <os/compat.h>
 
 AUTK_API AUTK_NORETURN void
 autk_default_expect_failed(const char *expr, autk_status_t status, const char *module_name,
                            const autk_source_location_t *location)
 {
-    char status_msg[64];
     char full_msg[512];
     const char *msg_ptr;
 
-    autk_status_to_string(status, status_msg, sizeof(status_msg));
-
-    if (snprintf(full_msg, sizeof(full_msg), "AUTK_EXPECT failed with '%s': %s", status_msg, expr)
+    if (snprintf(full_msg, sizeof(full_msg), "AUTK_EXPECT failed with '%s': %s",
+                 autk_status_to_string(status), expr)
         >= 0)
     {
         msg_ptr = full_msg;
     } else {
-        msg_ptr = status_msg;
+        msg_ptr = autk_status_to_string(status);
     }
 
     autk_stderr_message(NULL, AUTK_MESSAGE_SEVERITY_FATAL, module_name, location, msg_ptr);
     exit(EXIT_FAILURE);
 }
 
-AUTK_API size_t
-autk_status_to_string(autk_status_t status, char *AUTK_RESTRICT buf, size_t buf_size)
+AUTK_API const char *
+autk_memory_tag_to_string(autk_memory_tag_t tag)
 {
-    const char *msg;
-    int fmt_result;
+    switch (tag) {
+#define AUTK_DO(e, s)                                                                              \
+    case e:                                                                                        \
+        return s;
+        AUTK_FOREACH_MEMORY_TAG(AUTK_DO)
+#undef AUTK_DO
+        default:
+            return "unknown";
+    }
+}
 
+AUTK_API const char *
+autk_status_to_string(autk_status_t status)
+{
     switch (status) {
 #define AUTK_DO(e, s)                                                                              \
     case e:                                                                                        \
-        msg = s;                                                                                   \
-        break;
+        return s;
         AUTK_FOREACH_STATUS(AUTK_DO)
 #undef AUTK_DO
         default:
-            fmt_result = snprintf(buf, buf_size, "status = %d", (int)status);
-            if (fmt_result < 0) {
-                return autk_strlcpy(buf, "Unknown error", buf_size);
-            }
-            return (size_t)fmt_result;
+            return "Unknown error";
     }
-
-    return autk_strlcpy(buf, msg, buf_size);
 }
 
 AUTK_API void

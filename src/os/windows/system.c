@@ -18,7 +18,8 @@
 #include <stdio.h>
 #include <windows.h>
 
-#include "../../os_compat.h"
+#include <os/compat.h>
+
 #include "system.h"
 
 AUTK_HIDDEN char *

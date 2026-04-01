@@ -169,8 +169,11 @@ AUTK_NORETURN void
 autk_expect_failed(const char *expr, autk_status_t status, const char *module_name,
                    const autk_source_location_t *location);
 
-AUTK_API size_t
-autk_status_to_string(autk_status_t status, char *buf, size_t buf_size);
+AUTK_API const char *
+autk_memory_tag_to_string(autk_memory_tag_t tag);
+
+AUTK_API const char *
+autk_status_to_string(autk_status_t status);
 
 AUTK_API void
 autk_stderr_message(void *unused, autk_message_severity_t severity, const char *module_name,

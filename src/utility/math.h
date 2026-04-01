@@ -14,8 +14,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef AUTK_IMPL_MATH_H_
-#define AUTK_IMPL_MATH_H_
+#ifndef AUTK_UTILITY_MATH_H_
+#define AUTK_UTILITY_MATH_H_
 
 #include <autk/types.h>
 
@@ -52,4 +52,4 @@ autk_align_up(size_t n)
 
 AUTK_END_DECLS
 
-#endif // AUTK_IMPL_MATH_H_
+#endif // AUTK_UTILITY_MATH_H_

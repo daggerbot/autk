@@ -21,11 +21,11 @@
 #include <xcb/xcb.h>
 
 #include <autk/diagnostics.h>
+#include <autk/window.h>
+#include <utility/encoding.h>
+#include <utility/hash.h>
+#include <utility/math.h>
 
-#include "../../encoding.h"
-#include "../../hash.h"
-#include "../../impl_math.h"
-#include "client.h"
 #include "window.h"
 
 // wm_normal_hints_t flags
@@ -227,7 +227,6 @@ autk_x11_window_set_title(autk_window_t *window, void *opaque_driver_data, const
         .window_data = window_data,
     };
     autk_status_t status;
-    char errbuf[64];
 
     if (!window_data->window_id) {
         return AUTK_ERR_RESOURCE_LOST;
@@ -248,9 +247,9 @@ autk_x11_window_set_title(autk_window_t *window, void *opaque_driver_data, const
         AUTK_ENCODING_FLAGS_LOSSY | AUTK_ENCODING_FLAGS_TRUNCATE_ON_ALLOC_FAILURE, '?');
 
     if (status != AUTK_OK) {
-        autk_status_to_string(status, errbuf, sizeof(errbuf));
         AUTK_WARN(window->instance,
-                  "Failed to convert window title to Latin-1 for legacy support: %s", errbuf);
+                  "Failed to convert window title to Latin-1 for legacy support: %s",
+                  autk_status_to_string(status));
     }
 
     return AUTK_OK;

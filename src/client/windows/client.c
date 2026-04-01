@@ -17,10 +17,9 @@
 #include <windows.h>
 
 #include <autk/diagnostics.h>
+#include <core/types.h>
+#include <os/windows/system.h>
 
-#include "../../impl_types.h"
-#include "../../platform/windows/system.h"
-#include "client.h"
 #include "window.h"
 
 static autk_status_t
