@@ -17,6 +17,7 @@
 #include <stdatomic.h>
 #include <string.h>
 
+#include <autk/diagnostics.h>
 #include <autk/ext/win9x_style.h>
 #include <autk/instance.h>
 #include <autk/math.h>
@@ -34,10 +35,8 @@ autk_style_create(autk_instance_t *instance, const autk_style_create_params_t *p
     autk_style_t *style;
     autk_status_t status;
     size_t alloc_size = autk_align_up(sizeof(autk_style_t));
-    size_t class_data_offset;
-    size_t class_data_size = 0;
-    size_t user_data_offset;
-    size_t user_data_size = 0;
+    size_t class_data_offset = 0;
+    size_t user_data_offset = 0;
 
     if (!instance || !params || !params->klass || !params->klass->extension_count || !out_style) {
         return AUTK_ERR_INVALID_ARGUMENT;
@@ -67,23 +66,9 @@ autk_style_create(autk_instance_t *instance, const autk_style_create_params_t *p
     }
 
     // Compute the size and layout of the style object.
-    class_data_offset = alloc_size;
-    if (params->klass->class_data_size > 0) {
-        class_data_size = autk_align_up(params->klass->class_data_size);
-        if (!class_data_size || class_data_size > SIZE_MAX - alloc_size) {
-            return AUTK_ERR_ARITHMETIC_OVERFLOW;
-        }
-        alloc_size += class_data_size;
-    }
-
-    user_data_offset = alloc_size;
-    if (params->user_data_size > 0) {
-        user_data_size = autk_align_up(params->user_data_size);
-        if (!user_data_size || user_data_size > SIZE_MAX - alloc_size) {
-            return AUTK_ERR_ARITHMETIC_OVERFLOW;
-        }
-        alloc_size += user_data_size;
-    }
+    AUTK_TRY(
+        autk_add_alloc_region(&alloc_size, params->klass->class_data_size, &class_data_offset));
+    AUTK_TRY(autk_add_alloc_region(&alloc_size, params->user_data_size, &user_data_offset));
 
     // Allocate the style object and initialize the header.
     style = autk_instance_alloc(instance, NULL, 0, alloc_size, AUTK_MEMORY_TAG_STYLE);
@@ -96,8 +81,8 @@ autk_style_create(autk_instance_t *instance, const autk_style_create_params_t *p
         .ref_count = 1,
         .alloc_size = alloc_size,
         .instance = instance,
-        .class_data = class_data_size ? (char *)style + class_data_offset : NULL,
-        .user_data = user_data_size ? (char *)style + user_data_offset : NULL,
+        .class_data = params->klass->class_data_size ? (char *)style + class_data_offset : NULL,
+        .user_data = params->user_data_size ? (char *)style + user_data_offset : NULL,
     };
 
     // Initialize the class data.

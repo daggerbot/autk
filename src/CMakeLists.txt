@@ -33,6 +33,7 @@ target_sources(autk PRIVATE
 
     utility/encoding.c
     utility/hash.c
+    utility/math.c
     utility/job_queue.c
 )
 

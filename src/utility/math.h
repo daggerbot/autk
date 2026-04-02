@@ -43,12 +43,21 @@ AUTK_DEFINE_INT_MATH(uint32_t, uint32)
 static inline size_t
 autk_align_up(size_t n)
 {
-#ifdef AUTK_ALIGNOF
     return ((n - 1) | (AUTK_ALIGNOF(max_align_t) - 1)) + 1;
-#else
-    return ((n - 1) | 15) + 1;
-#endif
 }
+
+static inline bool
+autk_is_aligned(size_t n)
+{
+    return (n & (AUTK_ALIGNOF(max_align_t) - 1)) == 0;
+}
+
+AUTK_HIDDEN autk_status_t
+autk_add_alloc_region(size_t *alloc_size, size_t region_size, size_t *region_offset);
+
+AUTK_HIDDEN autk_status_t
+autk_add_alloc_array_region(size_t *alloc_size, size_t elem_count, size_t elem_size,
+                            size_t *region_offset);
 
 AUTK_END_DECLS
 

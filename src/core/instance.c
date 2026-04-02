@@ -33,9 +33,8 @@ autk_instance_create(const autk_instance_create_params_t *params, autk_instance_
     autk_instance_create_flags_t flags;
     autk_alloc_func_t alloc_func;
     autk_instance_t *instance;
-    size_t alloc_size;
-    size_t user_data_offset;
-    size_t user_data_size = 0;
+    size_t alloc_size = autk_align_up(sizeof(autk_instance_t));
+    size_t user_data_offset = 0;
 
     if (!out_instance) {
         return AUTK_ERR_INVALID_ARGUMENT;
@@ -65,16 +64,7 @@ autk_instance_create(const autk_instance_create_params_t *params, autk_instance_
     }
 
     // Compute the actual size of the instance object.
-    alloc_size = autk_align_up(sizeof(autk_instance_t));
-    user_data_offset = alloc_size;
-
-    if (params->user_data_size > 0) {
-        user_data_size = autk_align_up(params->user_data_size);
-        if (!user_data_size || user_data_size > SIZE_MAX - alloc_size) {
-            return AUTK_ERR_ARITHMETIC_OVERFLOW;
-        }
-        alloc_size += user_data_size;
-    }
+    AUTK_TRY(autk_add_alloc_region(&alloc_size, params->user_data_size, &user_data_offset));
 
     // Allocate and initialize the instance.
     instance = alloc_func(params->alloc_ctx, NULL, 0, alloc_size, AUTK_MEMORY_TAG_INSTANCE);
@@ -93,11 +83,11 @@ autk_instance_create(const autk_instance_create_params_t *params, autk_instance_
     };
 
     // Initialize user data.
-    if (user_data_size) {
+    if (params->user_data_size) {
         if (params->user_data_init) {
             memcpy(instance->user_data, params->user_data_init, params->user_data_size);
         } else {
-            memset(instance->user_data, 0, user_data_size);
+            memset(instance->user_data, 0, params->user_data_size);
         }
     }
 

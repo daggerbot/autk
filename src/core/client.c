@@ -57,15 +57,11 @@ autk_client_create(autk_instance_t *instance, const autk_client_create_params_t 
     };
 
     const autk_client_driver_t *driver;
-    size_t alloc_size;
-    size_t driver_data_offset;
-    size_t driver_data_size = 0;
-    size_t device_offset;
-    size_t device_size = autk_align_up(sizeof(autk_device_t));
-    size_t device_driver_data_offset;
-    size_t device_driver_data_size = 0;
-    size_t user_data_offset;
-    size_t user_data_size = 0;
+    size_t alloc_size = autk_align_up(sizeof(autk_client_t));
+    size_t driver_data_offset = 0;
+    size_t device_offset = 0;
+    size_t device_driver_data_offset = 0;
+    size_t user_data_offset = 0;
     autk_client_t *client;
     autk_status_t status;
 
@@ -99,40 +95,12 @@ autk_client_create(autk_instance_t *instance, const autk_client_create_params_t 
     }
 
     // Compute the actual size of the client object.
-    alloc_size = autk_align_up(sizeof(autk_client_t));
-
-    driver_data_offset = alloc_size;
-    if (driver->driver_data_size) {
-        driver_data_size = autk_align_up(driver->driver_data_size);
-        if (!driver_data_size || driver_data_size > SIZE_MAX - alloc_size) {
-            return AUTK_ERR_ARITHMETIC_OVERFLOW;
-        }
-        alloc_size += driver_data_size;
-    }
-
-    device_offset = alloc_size;
-    if (device_size > SIZE_MAX - alloc_size) {
-        return AUTK_ERR_ARITHMETIC_OVERFLOW;
-    }
-    alloc_size += device_size;
-
-    device_driver_data_offset = alloc_size;
-    if (driver->device_driver && driver->device_driver->driver_data_size) {
-        device_driver_data_size = autk_align_up(driver->device_driver->driver_data_size);
-        if (!device_driver_data_size || device_driver_data_size > SIZE_MAX - alloc_size) {
-            return AUTK_ERR_ARITHMETIC_OVERFLOW;
-        }
-        alloc_size += device_driver_data_size;
-    }
-
-    user_data_offset = alloc_size;
-    if (params->user_data_size) {
-        user_data_size = autk_align_up(params->user_data_size);
-        if (!user_data_size || user_data_size > SIZE_MAX - alloc_size) {
-            return AUTK_ERR_ARITHMETIC_OVERFLOW;
-        }
-        alloc_size += user_data_size;
-    }
+    AUTK_TRY(autk_add_alloc_region(&alloc_size, driver->driver_data_size, &driver_data_offset));
+    AUTK_TRY(autk_add_alloc_region(&alloc_size, sizeof(autk_device_t), &device_offset));
+    AUTK_TRY(autk_add_alloc_region(
+        &alloc_size, driver->device_driver ? driver->device_driver->driver_data_size : 0,
+        &device_driver_data_offset));
+    AUTK_TRY(autk_add_alloc_region(&alloc_size, params->user_data_size, &user_data_offset));
 
     // Allocate the client object.
     client = autk_instance_alloc(instance, NULL, 0, alloc_size, AUTK_MEMORY_TAG_CLIENT);
@@ -145,27 +113,27 @@ autk_client_create(autk_instance_t *instance, const autk_client_create_params_t 
         .driver = driver,
         .alloc_size = alloc_size,
         .instance = instance,
-        .driver_data = driver_data_size ? (char *)client + driver_data_offset : NULL,
+        .driver_data = driver->driver_data_size ? (char *)client + driver_data_offset : NULL,
         .device = (autk_device_t *)((char *)client + device_offset),
-        .user_data = user_data_size ? (char *)client + user_data_offset : NULL,
+        .user_data = params->user_data_size ? (char *)client + user_data_offset : NULL,
     };
 
     *client->device = (autk_device_t){
         .driver = driver->device_driver,
         .instance = instance,
-        .driver_data = device_driver_data_size ? (char *)client + device_driver_data_offset : NULL,
-        .user_data = user_data_size ? (char *)client + user_data_offset : NULL,
+        .driver_data = driver->device_driver ? (char *)client + device_driver_data_offset : NULL,
+        .user_data = params->user_data_size ? (char *)client + user_data_offset : NULL,
     };
 
-    if (driver_data_size) {
-        memset(client->driver_data, 0, driver_data_size);
+    if (driver->driver_data_size) {
+        memset(client->driver_data, 0, driver->driver_data_size);
     }
 
-    if (user_data_size) {
+    if (params->user_data_size) {
         if (params->user_data_init) {
             memcpy(client->user_data, params->user_data_init, params->user_data_size);
         } else {
-            memset(client->user_data, 0, user_data_size);
+            memset(client->user_data, 0, params->user_data_size);
         }
     }
 

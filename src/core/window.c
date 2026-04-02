@@ -64,10 +64,8 @@ autk_window_create(autk_client_t *client, const autk_window_create_params_t *par
 
     const autk_window_driver_t *driver;
     size_t alloc_size = autk_align_up(sizeof(autk_window_t));
-    size_t driver_data_offset;
-    size_t driver_data_size = 0;
-    size_t user_data_offset;
-    size_t user_data_size = 0;
+    size_t driver_data_offset = 0;
+    size_t user_data_offset = 0;
     autk_window_t *window;
     autk_status_t status;
 
@@ -98,23 +96,8 @@ autk_window_create(autk_client_t *client, const autk_window_create_params_t *par
     }
 
     // Compute the size and layout of the window object.
-    driver_data_offset = alloc_size;
-    if (driver->driver_data_size) {
-        driver_data_size = autk_align_up(driver->driver_data_size);
-        if (!driver_data_size || driver_data_size > SIZE_MAX - alloc_size) {
-            return AUTK_ERR_ARITHMETIC_OVERFLOW;
-        }
-        alloc_size += driver_data_size;
-    }
-
-    user_data_offset = alloc_size;
-    if (params->user_data_size) {
-        user_data_size = autk_align_up(params->user_data_size);
-        if (!user_data_size || user_data_size > SIZE_MAX - alloc_size) {
-            return AUTK_ERR_ARITHMETIC_OVERFLOW;
-        }
-        alloc_size += user_data_size;
-    }
+    AUTK_TRY(autk_add_alloc_region(&alloc_size, driver->driver_data_size, &driver_data_offset));
+    AUTK_TRY(autk_add_alloc_region(&alloc_size, params->user_data_size, &user_data_offset));
 
     // Allocate and initialize the window object.
     window = autk_instance_alloc(client->instance, NULL, 0, alloc_size, AUTK_MEMORY_TAG_WINDOW);
@@ -128,12 +111,12 @@ autk_window_create(autk_client_t *client, const autk_window_create_params_t *par
         .instance = client->instance,
         .client = client,
         .callbacks = params->callbacks,
-        .driver_data = driver_data_size ? (char *)window + driver_data_offset : NULL,
-        .user_data = user_data_size ? (char *)window + user_data_offset : NULL,
+        .driver_data = driver->driver_data_size ? (char *)window + driver_data_offset : NULL,
+        .user_data = params->user_data_size ? (char *)window + user_data_offset : NULL,
     };
 
     // Initialize the driver data.
-    if (driver_data_size) {
+    if (driver->driver_data_size) {
         memset(window->driver_data, 0, driver->driver_data_size);
     }
     if (driver->init) {
@@ -151,7 +134,7 @@ autk_window_create(autk_client_t *client, const autk_window_create_params_t *par
     AUTK_TRY(init_background_color(window, params));
 
     // Initialize the user data region.
-    if (user_data_size) {
+    if (params->user_data_size) {
         if (params->user_data_init) {
             memcpy(window->user_data, params->user_data_init, params->user_data_size);
         } else {
