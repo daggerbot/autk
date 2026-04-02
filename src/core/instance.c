@@ -30,7 +30,7 @@ autk_instance_create(const autk_instance_create_params_t *params, autk_instance_
         .struct_size = sizeof(autk_instance_create_params_t),
     };
 
-    autk_instance_flags_t flags;
+    autk_instance_create_flags_t flags;
     autk_alloc_func_t alloc_func;
     autk_instance_t *instance;
     size_t alloc_size;
@@ -57,10 +57,10 @@ autk_instance_create(const autk_instance_create_params_t *params, autk_instance_
         alloc_func = params->alloc_func;
     } else {
         alloc_func = &autk_default_alloc;
-        flags |= AUTK_INSTANCE_FLAGS_THREAD_SAFE_ALLOC;
+        flags |= AUTK_INSTANCE_CREATE_FLAG_THREAD_SAFE_ALLOC;
     }
 
-    if (params->flags & (autk_instance_flags_t)~AUTK_INSTANCE_FLAGS_ALL) {
+    if (params->flags & (autk_instance_create_flags_t)~AUTK_INSTANCE_CREATE_FLAG_ALL) {
         return AUTK_ERR_INVALID_ARGUMENT;
     }
 
@@ -89,8 +89,6 @@ autk_instance_create(const autk_instance_create_params_t *params, autk_instance_
         .alloc_ctx = params->alloc_ctx,
         .message_func = params->message_func,
         .message_ctx = params->message_ctx,
-        .lifetime_hooks = params->lifetime_hooks,
-        .lifetime_hooks_ctx = params->lifetime_hooks_ctx,
         .user_data = params->user_data_size ? (char *)instance + user_data_offset : NULL,
     };
 
@@ -101,12 +99,6 @@ autk_instance_create(const autk_instance_create_params_t *params, autk_instance_
         } else {
             memset(instance->user_data, 0, user_data_size);
         }
-    }
-
-    // Notify lifetime hooks.
-    if (instance->lifetime_hooks && params->lifetime_hooks->created) {
-        params->lifetime_hooks->created(params->lifetime_hooks_ctx, instance, instance,
-                                        AUTK_OBJECT_TYPE_INSTANCE, NULL, AUTK_OBJECT_TYPE_NONE);
     }
 
     // Success!
@@ -121,14 +113,6 @@ autk_instance_destroy(autk_instance_t *instance)
         return;
     }
 
-    // Notify lifetime hooks.
-    if (instance->lifetime_hooks && instance->lifetime_hooks->destroying) {
-        instance->lifetime_hooks->destroying(instance->lifetime_hooks_ctx, instance, instance,
-                                             AUTK_OBJECT_TYPE_INSTANCE, NULL,
-                                             AUTK_OBJECT_TYPE_NONE);
-    }
-
-    // Free the instance object.
     autk_instance_alloc(instance, instance, instance->alloc_size, 0, AUTK_MEMORY_TAG_INSTANCE);
 }
 

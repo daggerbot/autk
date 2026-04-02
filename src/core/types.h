@@ -17,11 +17,40 @@
 #ifndef AUTK_CORE_TYPES_H_
 #define AUTK_CORE_TYPES_H_
 
+#include <stdatomic.h>
+
 #include <autk/types.h>
+
+typedef uint32_t autk_window_flags_t;
+enum autk_window_flags {
+    AUTK_WINDOW_FLAG_EXPLICIT_BACKGROUND_COLOR = 1 << 0,
+};
 
 struct autk_client {
     const autk_client_driver_t *driver;
     size_t alloc_size;
+    autk_instance_t *instance;
+
+    // App-specified styles (e.g. autk_client_create_params_t)
+    uint16_t app_style_capacity;
+    uint16_t app_style_count;
+    autk_style_t **app_styles;
+
+    // Fallback styles (created lazily by widgets if no matching style extension is found)
+    uint16_t fallback_style_capacity;
+    uint16_t fallback_style_count;
+    autk_style_t **fallback_styles;
+
+    void *driver_data;
+    autk_device_t *device;
+    void *user_data;
+};
+
+struct autk_device {
+    // Currently, a device is always owned by a client and part of its heap block. If/when we extend
+    // the API to allow creating devices independently of clients, we'll need to add the usual
+    // boilerplate.
+    const autk_device_driver_t *driver;
     autk_instance_t *instance;
     void *driver_data;
     void *user_data;
@@ -29,7 +58,7 @@ struct autk_client {
 
 struct autk_instance {
     size_t alloc_size;
-    autk_instance_flags_t flags;
+    autk_instance_create_flags_t flags;
     autk_alloc_func_t alloc_func;
     void *alloc_ctx;
     autk_message_func_t message_func;
@@ -39,11 +68,22 @@ struct autk_instance {
     void *user_data;
 };
 
+struct autk_style {
+    const autk_style_class_t *klass;
+    _Atomic uint32_t ref_count;
+    size_t alloc_size;
+    autk_instance_t *instance;
+    void *class_data;
+    void *user_data;
+};
+
 struct autk_window {
     const autk_window_driver_t *driver;
     size_t alloc_size;
     autk_instance_t *instance;
     autk_client_t *client;
+    autk_window_flags_t flags;
+    autk_rgba_t background_color;
     const autk_window_callbacks_t *callbacks;
     void *driver_data;
     void *user_data;

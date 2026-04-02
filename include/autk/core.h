@@ -14,10 +14,18 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef AUTK_AUTK_H_
-#define AUTK_AUTK_H_
+#ifndef AUTK_CORE_H_
+#define AUTK_CORE_H_
 
-#include "core.h"
-#include "ext/style_ext_base.h"
+#include <autk/config.h>
 
-#endif // AUTK_AUTK_H_
+#include "client.h"
+#include "device.h"
+#include "diagnostics.h"
+#include "instance.h"
+#include "math.h"
+#include "style.h"
+#include "types.h"
+#include "window.h"
+
+#endif // AUTK_CORE_H_

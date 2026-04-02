@@ -30,6 +30,7 @@ struct autk_windows_client_data {
 
 struct autk_windows_window_data {
     HWND hwnd;
+    HBRUSH background_brush;
 };
 
 #endif // AUTK_CLIENT_WINDOWS_TYPES_H_

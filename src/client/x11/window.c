@@ -26,6 +26,7 @@
 #include <utility/hash.h>
 #include <utility/math.h>
 
+#include "client.h"
 #include "window.h"
 
 // wm_normal_hints_t flags
@@ -51,38 +52,6 @@ typedef struct {
 
 //==============================================================================
 //
-// Misc X11 window functions
-//
-//==============================================================================
-
-AUTK_HIDDEN void
-autk_x11_window_invalidate(autk_window_t *window)
-{
-    autk_x11_window_data_t *window_data = window->driver_data;
-    autk_x11_client_data_t *client_data;
-    autk_window_t *removed_window;
-
-    if (!window) {
-        return;
-    }
-
-    assert(window->driver == &autk_window_driver_x11);
-    client_data = window->client->driver_data;
-
-    if (window_data->window_id != 0) {
-        removed_window =
-            autk_x11_window_map_remove(&client_data->window_map, window_data->window_id);
-        assert(removed_window == window);
-        window_data->window_id = 0;
-    }
-
-    if (window->callbacks && window->callbacks->invalidated) {
-        window->callbacks->invalidated(window, window->user_data);
-    }
-}
-
-//==============================================================================
-//
 // X11 window driver
 //
 //==============================================================================
@@ -96,13 +65,13 @@ set_wm_normal_hints(autk_x11_client_data_t *client_data, autk_x11_window_data_t 
 {
     wm_normal_hints_t hints = {0};
 
-    if (params->flags & AUTK_WINDOW_CREATE_FLAGS_POSITION) {
+    if (params->flags & AUTK_WINDOW_CREATE_FLAG_POSITION) {
         hints.flags |= WM_NORMAL_HINTS_PPosition;
         hints.x = autk_int32_clamp(params->x, INT16_MIN, INT16_MAX);
         hints.y = autk_int32_clamp(params->y, INT16_MIN, INT16_MAX);
     }
 
-    if (params->flags & AUTK_WINDOW_CREATE_FLAGS_SIZE) {
+    if (params->flags & AUTK_WINDOW_CREATE_FLAG_SIZE) {
         hints.flags |= WM_NORMAL_HINTS_PSize;
         hints.width = autk_uint32_clamp(params->width, 1, UINT16_MAX);
         hints.height = autk_uint32_clamp(params->height, 1, UINT16_MAX);
@@ -133,28 +102,30 @@ static autk_status_t
 autk_x11_window_init(autk_window_t *window, void *opaque_driver_data,
                      const autk_window_create_params_t *params)
 {
-    static const uint32_t value_list[] = {
-        XCB_EVENT_MASK_STRUCTURE_NOTIFY,
-    };
-
     autk_x11_window_data_t *window_data = opaque_driver_data;
     autk_x11_client_data_t *client_data = window->client->driver_data;
     int16_t x = 0;
     int16_t y = 0;
     uint16_t width = AUTK_WINDOW_FALLBACK_WIDTH;
     uint16_t height = AUTK_WINDOW_FALLBACK_HEIGHT;
+    uint32_t value_list[16]; // should be more than enough
+    size_t value_list_index = 0;
+    uint32_t value_list_mask = XCB_CW_EVENT_MASK;
 
     window_data->connection = client_data->connection;
 
     // Determine the actual window position and size.
-    if (params->flags & AUTK_WINDOW_CREATE_FLAGS_POSITION) {
+    if (params->flags & AUTK_WINDOW_CREATE_FLAG_POSITION) {
         x = (int16_t)autk_int32_clamp(params->x, INT16_MIN, INT16_MAX);
         y = (int16_t)autk_int32_clamp(params->y, INT16_MIN, INT16_MAX);
     }
-    if (params->flags & AUTK_WINDOW_CREATE_FLAGS_SIZE) {
+    if (params->flags & AUTK_WINDOW_CREATE_FLAG_SIZE) {
         width = (uint16_t)autk_uint32_clamp(params->width, 1, UINT16_MAX);
         height = (uint16_t)autk_uint32_clamp(params->height, 1, UINT16_MAX);
     }
+
+    // Set up the value list for window creation.
+    value_list[value_list_index++] = XCB_EVENT_MASK_EXPOSURE | XCB_EVENT_MASK_STRUCTURE_NOTIFY;
 
     // Claim a unique ID for the window.
     do {
@@ -165,7 +136,7 @@ autk_x11_window_init(autk_window_t *window, void *opaque_driver_data,
     xcb_create_window(window_data->connection, client_data->default_depth, window_data->window_id,
                       client_data->default_screen->root, x, y, width, height, 0,
                       XCB_WINDOW_CLASS_INPUT_OUTPUT, client_data->default_visual->visual_id,
-                      XCB_CW_EVENT_MASK, value_list);
+                      value_list_mask, value_list);
 
     // Set post-creation properties.
     AUTK_TRY(set_wm_normal_hints(client_data, window_data, params));
@@ -214,6 +185,27 @@ set_legacy_title(void *opaque_ctx, const char *title, size_t length)
     xcb_change_property(ctx->window_data->connection, XCB_PROP_MODE_REPLACE,
                         ctx->window_data->window_id, XCB_ATOM_WM_ICON_NAME, XCB_ATOM_STRING, 8,
                         (uint32_t)length, title);
+}
+
+static autk_status_t
+autk_x11_window_set_background_color(autk_window_t *window, void *opaque_driver_data,
+                                     autk_rgba_t color)
+{
+    autk_x11_window_data_t *window_data = opaque_driver_data;
+    uint32_t pixel_value;
+
+    if (!window_data->window_id) {
+        return AUTK_ERR_RESOURCE_LOST;
+    } else if (!color.a) {
+        // We can't unset a background color once we've set it.
+        return AUTK_OK;
+    }
+
+    pixel_value = autk_x11_client_map_color(window->client->driver_data, color);
+    xcb_change_window_attributes(window_data->connection, window_data->window_id, XCB_CW_BACK_PIXEL,
+                                 &pixel_value);
+
+    return AUTK_OK;
 }
 
 static autk_status_t
@@ -281,9 +273,43 @@ AUTK_HIDDEN const autk_window_driver_t autk_window_driver_x11 = {
 
     .init = &autk_x11_window_init,
     .fini = &autk_x11_window_fini,
+
+    .set_background_color = &autk_x11_window_set_background_color,
     .set_title = &autk_x11_window_set_title,
     .set_visible = &autk_x11_window_set_visible,
 };
+
+//==============================================================================
+//
+// Internal API
+//
+//==============================================================================
+
+AUTK_HIDDEN void
+autk_x11_window_invalidate(autk_window_t *window)
+{
+    autk_x11_window_data_t *window_data = window->driver_data;
+    autk_x11_client_data_t *client_data;
+    autk_window_t *removed_window;
+
+    if (!window) {
+        return;
+    }
+
+    assert(window->driver == &autk_window_driver_x11);
+    client_data = window->client->driver_data;
+
+    if (window_data->window_id != 0) {
+        removed_window =
+            autk_x11_window_map_remove(&client_data->window_map, window_data->window_id);
+        assert(removed_window == window);
+        window_data->window_id = 0;
+    }
+
+    if (window->callbacks && window->callbacks->invalidated) {
+        window->callbacks->invalidated(window, window->user_data);
+    }
+}
 
 //==============================================================================
 //

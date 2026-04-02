@@ -14,10 +14,33 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef AUTK_AUTK_H_
-#define AUTK_AUTK_H_
+#ifndef AUTK_MATH_H_
+#define AUTK_MATH_H_
 
-#include "core.h"
-#include "ext/style_ext_base.h"
+#include "types.h"
 
-#endif // AUTK_AUTK_H_
+static inline int32_t
+autk_scale_int32(int32_t n, autk_u30x2_t scale)
+{
+    return (int32_t)((n * (int64_t)scale) >> 2);
+}
+
+static inline uint32_t
+autk_scale_uint32(uint32_t n, autk_u30x2_t scale)
+{
+    return (uint32_t)((n * (uint64_t)scale) >> 2);
+}
+
+static inline bool
+autk_uuid_equals(const autk_uuid_t *a, const autk_uuid_t *b)
+{
+    return a->parts[0] == b->parts[0] && a->parts[1] == b->parts[1];
+}
+
+static inline bool
+autk_uuid_is_zero(const autk_uuid_t *uuid)
+{
+    return uuid->parts[0] == 0 && uuid->parts[1] == 0;
+}
+
+#endif // AUTK_MATH_H_

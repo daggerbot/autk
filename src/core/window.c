@@ -18,9 +18,41 @@
 
 #include <autk/client.h>
 #include <autk/diagnostics.h>
+#include <autk/ext/style_ext_base.h>
+#include <autk/style.h>
 #include <autk/window.h>
 #include <core/types.h>
 #include <utility/math.h>
+
+static autk_status_t
+init_background_color(autk_window_t *window, const autk_window_create_params_t *params)
+{
+    static const autk_extension_query_t query = {
+        .uuid = AUTK_STYLE_EXTENSION_BASE_INIT,
+        .min_version = 1,
+    };
+    autk_style_t *style;
+    const autk_extension_header_t *ext;
+
+    // Choose a background color from params or style defaults.
+    if (params->flags & AUTK_WINDOW_CREATE_FLAG_BACKGROUND_COLOR) {
+        window->background_color = params->background_color;
+        window->flags |= AUTK_WINDOW_FLAG_EXPLICIT_BACKGROUND_COLOR;
+    } else {
+        AUTK_TRY(autk_client_find_or_create_style_extension(window->client, &query, &style, &ext,
+                                                            autk_style_class_default));
+        window->background_color =
+            autk_style_ext_base_get_default_window_background_color(style, ext, params->type);
+    }
+
+    // Set the background color.
+    if (window->driver->set_background_color) {
+        AUTK_TRY(window->driver->set_background_color(window, window->driver_data,
+                                                      window->background_color));
+    }
+
+    return AUTK_OK;
+}
 
 AUTK_API autk_status_t
 autk_window_create(autk_client_t *client, const autk_window_create_params_t *params,
@@ -31,7 +63,7 @@ autk_window_create(autk_client_t *client, const autk_window_create_params_t *par
     };
 
     const autk_window_driver_t *driver;
-    size_t alloc_size;
+    size_t alloc_size = autk_align_up(sizeof(autk_window_t));
     size_t driver_data_offset;
     size_t driver_data_size = 0;
     size_t user_data_offset;
@@ -57,7 +89,7 @@ autk_window_create(autk_client_t *client, const autk_window_create_params_t *par
     // Validate parameters.
     if (params->struct_size != sizeof(autk_window_create_params_t)) {
         return AUTK_ERR_INVALID_STRUCT_SIZE;
-    } else if (params->flags & (autk_window_create_flags_t)~AUTK_WINDOW_CREATE_FLAGS_ALL) {
+    } else if (params->flags & (autk_window_create_flags_t)~AUTK_WINDOW_CREATE_FLAG_ALL) {
         return AUTK_ERR_INVALID_ARGUMENT;
     } else if (params->callbacks
                && params->callbacks->struct_size != sizeof(autk_window_callbacks_t))
@@ -66,8 +98,6 @@ autk_window_create(autk_client_t *client, const autk_window_create_params_t *par
     }
 
     // Compute the size and layout of the window object.
-    alloc_size = autk_align_up(sizeof(autk_window_t));
-
     driver_data_offset = alloc_size;
     if (driver->driver_data_size) {
         driver_data_size = autk_align_up(driver->driver_data_size);
@@ -117,6 +147,9 @@ autk_window_create(autk_client_t *client, const autk_window_create_params_t *par
         }
     }
 
+    // Set post-creation properties.
+    AUTK_TRY(init_background_color(window, params));
+
     // Initialize the user data region.
     if (user_data_size) {
         if (params->user_data_init) {
@@ -124,13 +157,6 @@ autk_window_create(autk_client_t *client, const autk_window_create_params_t *par
         } else {
             memset(window->user_data, 0, params->user_data_size);
         }
-    }
-
-    // Notify the lifetime hooks.
-    if (client->instance->lifetime_hooks && client->instance->lifetime_hooks->created) {
-        client->instance->lifetime_hooks->created(client->instance->lifetime_hooks_ctx,
-                                                  client->instance, window, AUTK_OBJECT_TYPE_WINDOW,
-                                                  client, AUTK_OBJECT_TYPE_CLIENT);
     }
 
     // Success!
@@ -143,13 +169,6 @@ autk_window_destroy(autk_window_t *window)
 {
     if (!window) {
         return;
-    }
-
-    // Notify the lifetime hooks.
-    if (window->instance->lifetime_hooks && window->instance->lifetime_hooks->destroying) {
-        window->instance->lifetime_hooks->destroying(
-            window->instance->lifetime_hooks_ctx, window->instance, window, AUTK_OBJECT_TYPE_WINDOW,
-            window->client, AUTK_OBJECT_TYPE_CLIENT);
     }
 
     // Notify the user finalizer.

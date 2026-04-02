@@ -36,6 +36,8 @@ autk_windows_window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     autk_window_t *window;
     autk_windows_window_data_t *window_data;
+    HDC hdc;
+    RECT rect;
 
     switch (msg) {
         case WM_CLOSE:
@@ -56,6 +58,19 @@ autk_windows_window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
                         window->callbacks->invalidated(window, window->user_data);
                     }
                     window_data->hwnd = NULL;
+                }
+            }
+            return 0;
+
+        case WM_ERASEBKGND:
+            window = (autk_window_t *)GetWindowLongPtrW(hwnd, GWLP_USERDATA);
+            if (window) {
+                window_data = window->driver_data;
+                if (window_data && window_data->background_brush) {
+                    hdc = (HDC)wparam;
+                    GetClientRect(hwnd, &rect);
+                    FillRect(hdc, &rect, window_data->background_brush);
+                    return 1; // Indicate that we've handled erasing the background.
                 }
             }
             return 0;
@@ -104,12 +119,12 @@ autk_windows_window_init(autk_window_t *window, void *opaque_window_data,
     }
 
     // Handle explicit window position.
-    if (params->flags & AUTK_WINDOW_CREATE_FLAGS_POSITION) {
+    if (params->flags & AUTK_WINDOW_CREATE_FLAG_POSITION) {
         x = params->x;
         y = params->y;
     }
 
-    if (params->flags & AUTK_WINDOW_CREATE_FLAGS_SIZE) {
+    if (params->flags & AUTK_WINDOW_CREATE_FLAG_SIZE) {
         RECT rect = {0, 0, (int)autk_uint32_clamp(params->width, 1, INT_MAX),
                      (int)autk_uint32_clamp(params->height, 1, INT_MAX)};
 
@@ -159,6 +174,11 @@ autk_windows_window_fini(autk_window_t *window, void *opaque_window_data)
 
     (void)window;
 
+    if (window_data->background_brush) {
+        DeleteObject(window_data->background_brush);
+        window_data->background_brush = NULL;
+    }
+
     if (window_data->hwnd) {
         hwnd = window_data->hwnd;
         window_data->hwnd = NULL; // Prevent calling `callbacks->invalidated`.
@@ -187,6 +207,29 @@ set_title_utf16(void *opaque_ctx, const uint16_t *title, size_t len)
                    autk_windows_error_to_string(GetLastError(), errbuf, sizeof(errbuf)));
         ctx->status = AUTK_ERR_RUNTIME_FAILURE;
     }
+}
+
+static autk_status_t
+autk_windows_window_set_background_color(autk_window_t *window, void *opaque_window_data,
+                                         autk_rgba_t color)
+{
+    autk_windows_window_data_t *window_data = opaque_window_data;
+
+    (void)window;
+
+    if (window_data->background_brush) {
+        DeleteObject(window_data->background_brush);
+        window_data->background_brush = NULL;
+    }
+
+    if (color.a > 0) {
+        window_data->background_brush = CreateSolidBrush(RGB(color.r, color.g, color.b));
+        if (!window_data->background_brush) {
+            return AUTK_ERR_RUNTIME_FAILURE;
+        }
+    }
+
+    return AUTK_OK;
 }
 
 static autk_status_t
@@ -237,6 +280,8 @@ AUTK_HIDDEN const autk_window_driver_t autk_window_driver_windows = {
 
     .init = &autk_windows_window_init,
     .fini = &autk_windows_window_fini,
+
+    .set_background_color = &autk_windows_window_set_background_color,
     .set_title = &autk_windows_window_set_title,
     .set_visible = &autk_windows_window_set_visible,
 };

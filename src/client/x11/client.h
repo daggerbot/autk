@@ -14,10 +14,12 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef AUTK_AUTK_H_
-#define AUTK_AUTK_H_
+#ifndef AUTK_CLIENT_X11_CLIENT_H_
+#define AUTK_CLIENT_X11_CLIENT_H_
 
-#include "core.h"
-#include "ext/style_ext_base.h"
+#include "types.h"
 
-#endif // AUTK_AUTK_H_
+AUTK_HIDDEN uint32_t
+autk_x11_client_map_color(const autk_x11_client_data_t *client_data, autk_rgb_t color);
+
+#endif // AUTK_CLIENT_X11_CLIENT_H_

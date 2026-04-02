@@ -64,6 +64,8 @@ struct autk_x11_client_data {
     xcb_screen_t *default_screen;
     uint8_t default_depth;
     xcb_visualtype_t *default_visual;
+    autk_rgb_t color_shift;
+    uint32_t default_colormap;
     autk_x11_atoms_t atoms;
     autk_x11_window_map_t window_map;
     autk_posix_job_queue_t job_queue;

@@ -20,9 +20,14 @@ endif()
 
 target_sources(autk PRIVATE
     core/client.c
+    core/device.c
     core/diagnostics.c
     core/instance.c
+    core/style.c
     core/window.c
+
+    ext/style_ext_base.c
+    ext/win9x_style.c
 
     os/compat.c
 

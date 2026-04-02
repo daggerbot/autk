@@ -14,7 +14,20 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <stdio.h>
+
 #include <autk/autk.h>
+
+static void *
+debug_alloc(void *ctx, void *block, size_t old_size, size_t new_size, autk_memory_tag_t tag)
+{
+    (void)ctx;
+
+    fprintf(stderr, "alloc %p osize=%zu nsize=%zu tag=%s\n", block, old_size, new_size,
+            autk_memory_tag_to_string(tag));
+
+    return autk_default_alloc(ctx, block, old_size, new_size, tag);
+}
 
 // Provide a handler for when `AUTK_EXPECT` fails.
 void
@@ -30,6 +43,7 @@ main(int argc, char *argv[])
 {
     static const autk_instance_create_params_t instance_params = {
         .struct_size = sizeof(autk_instance_create_params_t),
+        .alloc_func = &debug_alloc, // use our debug allocator
         .message_func = &autk_stderr_message, // print messages to stderr
     };
     static const autk_window_callbacks_t window_callbacks = {

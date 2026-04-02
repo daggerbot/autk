@@ -23,7 +23,14 @@
 
 #include <autk/diagnostics.h>
 
+#include "client.h"
 #include "window.h"
+
+//==============================================================================
+//
+// X11 client driver
+//
+//==============================================================================
 
 static autk_status_t
 check_connection(autk_instance_t *instance, autk_x11_client_data_t *client_data)
@@ -90,6 +97,25 @@ find_default_screen(autk_instance_t *instance, autk_x11_client_data_t *client_da
     return AUTK_OK;
 }
 
+static bool
+get_color_shift_component(uint32_t mask, uint8_t *shift)
+{
+    *shift = 0;
+    while (mask && !(mask & 1)) {
+        mask >>= 1;
+        (*shift)++;
+    }
+    return mask == 0xFF;
+}
+
+static bool
+get_color_shift(const xcb_visualtype_t *visual, autk_rgb_t *color_shift)
+{
+    return get_color_shift_component(visual->red_mask, &color_shift->r)
+           && get_color_shift_component(visual->green_mask, &color_shift->g)
+           && get_color_shift_component(visual->blue_mask, &color_shift->b);
+}
+
 static autk_status_t
 choose_default_visual(autk_instance_t *instance, autk_x11_client_data_t *client_data)
 {
@@ -97,9 +123,11 @@ choose_default_visual(autk_instance_t *instance, autk_x11_client_data_t *client_
     uint8_t depth;
     xcb_visualtype_iterator_t visual_iter;
     xcb_visualtype_t *visual;
-    xcb_visualtype_t *root_visual = NULL;
     xcb_visualtype_t *best_24bit_visual = NULL;
     xcb_visualtype_t *best_32bit_visual = NULL;
+    autk_rgb_t color_shift;
+    autk_rgb_t best_24bit_color_shift;
+    autk_rgb_t best_32bit_color_shift;
 
     depth_iter = xcb_screen_allowed_depths_iterator(client_data->default_screen);
     for (; depth_iter.rem > 0; xcb_depth_next(&depth_iter)) {
@@ -108,19 +136,22 @@ choose_default_visual(autk_instance_t *instance, autk_x11_client_data_t *client_
         for (; visual_iter.rem > 0; xcb_visualtype_next(&visual_iter)) {
             visual = visual_iter.data;
 
-            // Check if this is the root visual.
-            if (visual->visual_id == client_data->default_screen->root_visual) {
-                root_visual = visual;
-            }
-
             // Check if this visual is suitable.
             if ((depth == 24 || depth == 32) && visual->_class == XCB_VISUAL_CLASS_TRUE_COLOR
-                && visual->bits_per_rgb_value == 8)
+                && visual->bits_per_rgb_value == 8 && get_color_shift(visual, &color_shift))
             {
-                if (depth == 24 && !best_24bit_visual) {
+                if (visual->visual_id == client_data->default_screen->root_visual) {
+                    // The root visual takes priority over any other visual.
+                    client_data->default_visual = visual;
+                    client_data->default_depth = depth;
+                    client_data->color_shift = color_shift;
+                    return AUTK_OK;
+                } else if (depth == 24 && !best_24bit_visual) {
                     best_24bit_visual = visual;
+                    best_24bit_color_shift = color_shift;
                 } else if (depth == 32 && !best_32bit_visual) {
                     best_32bit_visual = visual;
+                    best_32bit_color_shift = color_shift;
                 }
             }
         }
@@ -129,14 +160,11 @@ choose_default_visual(autk_instance_t *instance, autk_x11_client_data_t *client_
     if (best_24bit_visual) {
         client_data->default_visual = best_24bit_visual;
         client_data->default_depth = 24;
+        client_data->color_shift = best_24bit_color_shift;
     } else if (best_32bit_visual) {
         client_data->default_visual = best_32bit_visual;
         client_data->default_depth = 32;
-    } else if (root_visual) {
-        AUTK_WARN(instance,
-                  "No suitable 24-bit or 32-bit visuals found; defaulting to root visual");
-        client_data->default_visual = root_visual;
-        client_data->default_depth = client_data->default_screen->root_depth;
+        client_data->color_shift = best_32bit_color_shift;
     } else {
         AUTK_ERROR(instance, "No suitable X11 visual found");
         return AUTK_ERR_INVALID_CONFIGURATION;
@@ -181,6 +209,17 @@ intern_atoms(autk_instance_t *instance, autk_x11_client_data_t *client_data)
     return AUTK_OK;
 }
 
+static void
+create_default_colormap(autk_x11_client_data_t *client_data)
+{
+    uint32_t colormap;
+
+    colormap = xcb_generate_id(client_data->connection);
+    xcb_create_colormap(client_data->connection, XCB_COLORMAP_ALLOC_NONE, colormap,
+                        client_data->default_screen->root, client_data->default_visual->visual_id);
+    client_data->default_colormap = colormap;
+}
+
 static autk_status_t
 autk_x11_client_init(autk_client_t *client, void *opaque_client_data,
                      const autk_client_create_params_t *params)
@@ -197,15 +236,12 @@ autk_x11_client_init(autk_client_t *client, void *opaque_client_data,
     }
     client_data->display_fd = xcb_get_file_descriptor(client_data->connection);
 
-    // Populate X11 resources.
+    // Initialize other client resources.
     AUTK_TRY(find_default_screen(client->instance, client_data));
     AUTK_TRY(choose_default_visual(client->instance, client_data));
+    create_default_colormap(client_data);
     AUTK_TRY(intern_atoms(client->instance, client_data));
-
-    // Create the window map.
     autk_x11_window_map_init(client->instance, &client_data->window_map);
-
-    // Create the job queue.
     AUTK_TRY(autk_posix_job_queue_init(&client_data->job_queue));
 
     return AUTK_OK;
@@ -221,6 +257,9 @@ autk_x11_client_fini(autk_client_t *client, void *opaque_client_data)
     autk_posix_job_queue_fini(&client_data->job_queue);
     autk_x11_window_map_fini(&client_data->window_map);
 
+    if (client_data->default_colormap) {
+        xcb_free_colormap(client_data->connection, client_data->default_colormap);
+    }
     if (client_data->connection) {
         xcb_disconnect(client_data->connection);
     }
@@ -399,3 +438,17 @@ AUTK_API const autk_client_driver_t autk_client_driver_x11 = {
     .run = autk_x11_client_run,
     .quit = autk_x11_client_quit,
 };
+
+//==============================================================================
+//
+// Internal API
+//
+//==============================================================================
+
+AUTK_HIDDEN uint32_t
+autk_x11_client_map_color(const autk_x11_client_data_t *client_data, autk_rgb_t color)
+{
+    return (((uint32_t)color.r << client_data->color_shift.r)
+            | ((uint32_t)color.g << client_data->color_shift.g)
+            | ((uint32_t)color.b << client_data->color_shift.b));
+}

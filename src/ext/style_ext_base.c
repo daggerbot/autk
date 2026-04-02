@@ -14,10 +14,19 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef AUTK_AUTK_H_
-#define AUTK_AUTK_H_
+#include <autk/ext/style_ext_base.h>
+#include <core/types.h>
 
-#include "core.h"
-#include "ext/style_ext_base.h"
+AUTK_API autk_rgba_t
+autk_style_ext_base_get_default_window_background_color(const autk_style_t *style,
+                                                        const autk_extension_header_t *ext_header,
+                                                        autk_window_type_t window_type)
+{
+    autk_style_ext_base_v1_t *ext = (autk_style_ext_base_v1_t *)ext_header;
 
-#endif // AUTK_AUTK_H_
+    if (ext->get_default_window_background_color) {
+        return ext->get_default_window_background_color(style, style->class_data, window_type);
+    } else {
+        return (autk_rgba_t){0};
+    }
+}

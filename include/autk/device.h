@@ -14,10 +14,22 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef AUTK_AUTK_H_
-#define AUTK_AUTK_H_
+#ifndef AUTK_DEVICE_H_
+#define AUTK_DEVICE_H_
 
-#include "core.h"
-#include "ext/style_ext_base.h"
+#include "types.h"
 
-#endif // AUTK_AUTK_H_
+AUTK_BEGIN_DECLS
+
+AUTK_API void *
+autk_device_get_driver_data(autk_device_t *device);
+
+AUTK_API autk_instance_t *
+autk_device_get_instance(autk_device_t *device);
+
+AUTK_API void *
+autk_device_get_user_data(autk_device_t *device);
+
+AUTK_END_DECLS
+
+#endif // AUTK_DEVICE_H_
