@@ -21,10 +21,10 @@
 
 #include <autk/types.h>
 
-typedef uint32_t autk_window_flags_t;
 enum autk_window_flags {
     AUTK_WINDOW_FLAG_EXPLICIT_BACKGROUND_COLOR = 1 << 0,
 };
+typedef uint32_t autk_window_flags_t;
 
 struct autk_client {
     const autk_client_driver_t *driver;
@@ -63,8 +63,6 @@ struct autk_instance {
     void *alloc_ctx;
     autk_message_func_t message_func;
     void *message_ctx;
-    const autk_lifetime_hooks_t *lifetime_hooks;
-    void *lifetime_hooks_ctx;
     void *user_data;
 };
 
