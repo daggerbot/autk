@@ -37,9 +37,6 @@ AUTK_API autk_status_t
 autk_client_run(autk_client_t *client);
 
 AUTK_API autk_status_t
-autk_client_try_push_job(autk_client_t *client, autk_job_t job, bool *queued);
-
-AUTK_API autk_status_t
 autk_client_quit(autk_client_t *client);
 
 AUTK_API autk_device_t *

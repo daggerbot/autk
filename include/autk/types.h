@@ -245,8 +245,6 @@ typedef struct autk_client_driver {
     /// Function called to clean up the client's driver data.
     void (*fini)(struct autk_client *client, void *driver_data);
     autk_status_t (*run)(struct autk_client *client, void *driver_data);
-    autk_status_t (*push_job)(struct autk_client *client, void *driver_data, struct autk_job job,
-                              bool block, bool *queued);
     autk_status_t (*quit)(struct autk_client *client, void *driver_data);
 } autk_client_driver_t;
 

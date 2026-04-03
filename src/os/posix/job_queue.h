@@ -47,4 +47,7 @@ AUTK_HIDDEN autk_status_t
 autk_posix_job_queue_poll(autk_posix_job_queue_t *queue, int display_fd, int timeout,
                           int *queue_result, int *display_result);
 
+AUTK_HIDDEN autk_status_t
+autk_posix_job_queue_wakeup(autk_posix_job_queue_t *queue);
+
 #endif // AUTK_OS_POSIX_JOB_QUEUE_H_

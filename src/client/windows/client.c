@@ -66,10 +66,12 @@ static autk_status_t
 autk_windows_client_init(autk_client_t *client, void *opaque_client_data,
                          const autk_client_create_params_t *params)
 {
-    (void)opaque_client_data;
+    autk_windows_client_data_t *client_data = opaque_client_data;
+
     (void)params;
 
     AUTK_TRY(register_window_class(client->instance));
+    client_data->main_thread_id = GetCurrentThreadId();
 
     return AUTK_OK;
 }
@@ -104,10 +106,13 @@ autk_window_client_run(autk_client_t *client, void *opaque_client_data)
 static autk_status_t
 autk_window_client_quit(autk_client_t *client, void *opaque_client_data)
 {
-    (void)client;
-    (void)opaque_client_data;
+    autk_windows_client_data_t *client_data = opaque_client_data;
 
-    PostQuitMessage(0);
+    (void)client;
+
+    if (!PostThreadMessageW(client_data->main_thread_id, WM_QUIT, 0, 0)) {
+        return AUTK_ERR_RUNTIME_FAILURE;
+    }
 
     return AUTK_OK;
 }

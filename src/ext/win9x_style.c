@@ -101,8 +101,6 @@ win9x_style_init(autk_style_t *style, void *opaque_style_data, const void *class
     }
 
 #ifdef _WIN32
-    // TODO: Get the uxtheme color scheme.
-
     // Get the system color theme using the legacy GetSysColor() API.
     style_data->color_theme.window_background = colorref_to_rgba(GetSysColor(COLOR_BTNFACE));
     style_data->explicit_color_theme = false;

@@ -238,51 +238,6 @@ autk_client_run(autk_client_t *client)
 }
 
 AUTK_API autk_status_t
-autk_client_try_push_job(autk_client_t *client, autk_job_t job, bool *out_queued)
-{
-    autk_status_t status;
-    bool queued = false;
-
-    if (!client || !job.exec) {
-        status = AUTK_ERR_INVALID_ARGUMENT;
-        goto err;
-    } else if (!client->driver->push_job) {
-        status = AUTK_ERR_UNIMPLEMENTED;
-        goto err;
-    }
-
-    status = client->driver->push_job(client, client->driver_data, job, false, &queued);
-
-    switch (status) {
-        case AUTK_OK:
-            break;
-
-        case AUTK_ERR_TIMEOUT:
-        case AUTK_ERR_TRY_AGAIN:
-            status = AUTK_ERR_QUEUE_FULL;
-            goto err;
-
-        default:
-            goto err;
-    }
-
-    if (out_queued) {
-        *out_queued = true;
-    }
-
-    return AUTK_OK;
-
-err:
-    if (out_queued) {
-        *out_queued = queued;
-    } else if (!queued && job.fini) {
-        job.fini(job.ctx);
-    }
-
-    return status;
-}
-
-AUTK_API autk_status_t
 autk_client_quit(autk_client_t *client)
 {
     if (!client) {

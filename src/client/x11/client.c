@@ -14,6 +14,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <assert.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -21,6 +22,7 @@
 
 #include <xcb/xcb.h>
 
+#include <autk/client.h>
 #include <autk/diagnostics.h>
 
 #include "client.h"
@@ -417,14 +419,44 @@ autk_x11_client_run(autk_client_t *client, void *opaque_client_data)
 }
 
 static autk_status_t
-autk_x11_client_quit(autk_client_t *client, void *opaque_client_data)
+autk_x11_client_post_job(autk_client_t *client, void *opaque_client_data, autk_job_t job)
 {
     autk_x11_client_data_t *client_data = opaque_client_data;
+    autk_status_t status;
+    bool queued;
 
     (void)client;
 
-    client_data->quit_requested = true;
+    status = autk_posix_job_queue_push(&client_data->job_queue, job, &queued);
+    if (status != AUTK_OK) {
+        if (!queued && job.fini) {
+            job.fini(job.ctx);
+        }
+        return status;
+    }
+
     return AUTK_OK;
+}
+
+static void
+quit_job(void *ctx, autk_client_t *client)
+{
+    autk_x11_client_data_t *client_data;
+
+    (void)ctx;
+
+    assert(client->driver == &autk_client_driver_x11);
+    client_data = (autk_x11_client_data_t *)client->driver_data;
+    client_data->quit_requested = true;
+}
+
+static autk_status_t
+autk_x11_client_quit(autk_client_t *client, void *opaque_client_data)
+{
+    return autk_x11_client_post_job(client, opaque_client_data,
+                                    (autk_job_t){
+                                        .exec = quit_job,
+                                    });
 }
 
 AUTK_API const autk_client_driver_t autk_client_driver_x11 = {

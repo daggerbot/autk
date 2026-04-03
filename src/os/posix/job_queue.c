@@ -85,35 +85,13 @@ autk_posix_job_queue_fini(autk_posix_job_queue_t *queue)
     }
 }
 
-static autk_status_t
-notify_wakeup_pipe(autk_posix_job_queue_t *queue)
-{
-    while (1) {
-        if (write(queue->wakeup_write_fd, "", 1) >= 0) {
-            return AUTK_OK;
-        } else {
-            switch (errno) {
-                case EAGAIN:
-#if defined(EWOULDBLOCK) && EWOULDBLOCK != EAGAIN
-                case EWOULDBLOCK:
-#endif
-                    return AUTK_OK;
-                case EINTR:
-                    break;
-                default:
-                    return AUTK_ERR_IO_FAILURE;
-            }
-        }
-    }
-}
-
 AUTK_HIDDEN autk_status_t
 autk_posix_job_queue_try_push(autk_posix_job_queue_t *queue, autk_job_t job, bool *queued)
 {
     *queued = false;
     AUTK_TRY(autk_job_queue_try_push(&queue->queue, job));
     *queued = true;
-    return notify_wakeup_pipe(queue);
+    return autk_posix_job_queue_wakeup(queue);
 }
 
 AUTK_HIDDEN autk_status_t
@@ -122,7 +100,7 @@ autk_posix_job_queue_push(autk_posix_job_queue_t *queue, autk_job_t job, bool *q
     *queued = false;
     AUTK_TRY(autk_job_queue_push(&queue->queue, job));
     *queued = true;
-    return notify_wakeup_pipe(queue);
+    return autk_posix_job_queue_wakeup(queue);
 }
 
 AUTK_HIDDEN autk_status_t
@@ -208,4 +186,26 @@ autk_posix_job_queue_poll(autk_posix_job_queue_t *queue, int display_fd, int tim
     }
 
     return AUTK_OK;
+}
+
+AUTK_HIDDEN autk_status_t
+autk_posix_job_queue_wakeup(autk_posix_job_queue_t *queue)
+{
+    while (1) {
+        if (write(queue->wakeup_write_fd, "", 1) >= 0) {
+            return AUTK_OK;
+        } else {
+            switch (errno) {
+                case EAGAIN:
+#if defined(EWOULDBLOCK) && EWOULDBLOCK != EAGAIN
+                case EWOULDBLOCK:
+#endif
+                    return AUTK_OK;
+                case EINTR:
+                    break;
+                default:
+                    return AUTK_ERR_IO_FAILURE;
+            }
+        }
+    }
 }

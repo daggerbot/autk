@@ -25,7 +25,7 @@ typedef struct autk_windows_client_data autk_windows_client_data_t;
 typedef struct autk_windows_window_data autk_windows_window_data_t;
 
 struct autk_windows_client_data {
-    int _dummy;
+    DWORD main_thread_id;
 };
 
 struct autk_windows_window_data {
