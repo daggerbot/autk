@@ -234,8 +234,6 @@ typedef struct autk_client_create_params {
     const struct autk_client_driver *driver;
     const char *display_name;
     void *driver_init_ctx;
-    uint16_t app_style_count;
-    struct autk_style *const *app_styles;
     const autk_client_callbacks_t *callbacks;
     uint32_t user_data_size;
     const void *user_data_init;

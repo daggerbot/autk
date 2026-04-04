@@ -24,7 +24,7 @@ AUTK_API extern const autk_style_class_t *const autk_style_class_default;
 AUTK_BEGIN_DECLS
 
 AUTK_API autk_status_t
-autk_style_create(autk_instance_t *instance, const autk_style_create_params_t *params,
+autk_style_create(autk_device_t *device, const autk_style_create_params_t *params,
                   autk_style_t **out_style);
 
 AUTK_API autk_style_t *
@@ -35,6 +35,9 @@ autk_style_release(autk_style_t *style);
 
 AUTK_API void *
 autk_style_get_class_data(autk_style_t *style);
+
+AUTK_API autk_device_t *
+autk_style_get_device(autk_style_t *style);
 
 AUTK_API autk_instance_t *
 autk_style_get_instance(autk_style_t *style);

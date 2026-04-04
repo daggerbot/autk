@@ -122,7 +122,7 @@ AUTK_API const autk_style_class_t autk_style_class_win9x = {
 };
 
 AUTK_API autk_status_t
-autk_win9x_style_create(autk_instance_t *instance, const autk_win9x_style_create_params_t *params,
+autk_win9x_style_create(autk_device_t *device, const autk_win9x_style_create_params_t *params,
                         autk_style_t **out_style)
 {
     autk_style_create_params_t style_params = {
@@ -133,5 +133,5 @@ autk_win9x_style_create(autk_instance_t *instance, const autk_win9x_style_create
         .user_data_init = params ? params->user_data_init : NULL,
     };
 
-    return autk_style_create(instance, &style_params, out_style);
+    return autk_style_create(device, &style_params, out_style);
 }

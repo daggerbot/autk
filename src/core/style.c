@@ -29,7 +29,7 @@
 AUTK_API const autk_style_class_t *const autk_style_class_default = &autk_style_class_win9x;
 
 AUTK_API autk_status_t
-autk_style_create(autk_instance_t *instance, const autk_style_create_params_t *params,
+autk_style_create(autk_device_t *device, const autk_style_create_params_t *params,
                   autk_style_t **out_style)
 {
     autk_style_t *style;
@@ -38,7 +38,7 @@ autk_style_create(autk_instance_t *instance, const autk_style_create_params_t *p
     size_t class_data_offset = 0;
     size_t user_data_offset = 0;
 
-    if (!instance || !params || !params->klass || !params->klass->extension_count || !out_style) {
+    if (!device || !params || !params->klass || !params->klass->extension_count || !out_style) {
         return AUTK_ERR_INVALID_ARGUMENT;
     } else if (params->struct_size != sizeof(autk_style_create_params_t)
                || params->klass->struct_size != sizeof(autk_style_class_t))
@@ -71,7 +71,7 @@ autk_style_create(autk_instance_t *instance, const autk_style_create_params_t *p
     AUTK_TRY(autk_add_alloc_region(&alloc_size, params->user_data_size, &user_data_offset));
 
     // Allocate the style object and initialize the header.
-    style = autk_instance_alloc(instance, NULL, 0, alloc_size, AUTK_MEMORY_TAG_STYLE);
+    style = autk_instance_alloc(device->instance, NULL, 0, alloc_size, AUTK_MEMORY_TAG_STYLE);
     if (!style) {
         return AUTK_ERR_OUT_OF_MEMORY;
     }
@@ -80,7 +80,8 @@ autk_style_create(autk_instance_t *instance, const autk_style_create_params_t *p
         .klass = params->klass,
         .ref_count = 1,
         .alloc_size = alloc_size,
-        .instance = instance,
+        .instance = device->instance,
+        .device = device,
         .class_data = params->klass->class_data_size ? (char *)style + class_data_offset : NULL,
         .user_data = params->user_data_size ? (char *)style + user_data_offset : NULL,
     };
@@ -92,7 +93,8 @@ autk_style_create(autk_instance_t *instance, const autk_style_create_params_t *p
             if (params->klass->fini) {
                 params->klass->fini(style, style->class_data);
             }
-            autk_instance_alloc(instance, style, style->alloc_size, 0, AUTK_MEMORY_TAG_STYLE);
+            autk_instance_alloc(device->instance, style, style->alloc_size, 0,
+                                AUTK_MEMORY_TAG_STYLE);
             return status;
         }
     } else if (params->klass->class_data_size > 0) {

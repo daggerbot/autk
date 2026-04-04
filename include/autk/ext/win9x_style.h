@@ -40,7 +40,7 @@ AUTK_API extern const autk_win9x_style_color_theme_t autk_win9x_style_color_them
 AUTK_BEGIN_DECLS
 
 AUTK_API autk_status_t
-autk_win9x_style_create(autk_instance_t *instance, const autk_win9x_style_create_params_t *params,
+autk_win9x_style_create(autk_device_t *device, const autk_win9x_style_create_params_t *params,
                         autk_style_t **out_style);
 
 AUTK_END_DECLS

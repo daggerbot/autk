@@ -76,14 +76,6 @@ autk_client_create(autk_instance_t *instance, const autk_client_create_params_t 
 
     if (params->struct_size != sizeof(autk_client_create_params_t)) {
         return AUTK_ERR_INVALID_STRUCT_SIZE;
-    } else if (params->app_style_count > 0 && !params->app_styles) {
-        return AUTK_ERR_INVALID_ARGUMENT;
-    }
-
-    for (uint16_t i = 0; i < params->app_style_count; i++) {
-        if (!params->app_styles[i]) {
-            return AUTK_ERR_INVALID_ARGUMENT;
-        }
     }
 
     // Choose a driver if unspecified, then validate.
@@ -138,24 +130,6 @@ autk_client_create(autk_instance_t *instance, const autk_client_create_params_t 
         }
     }
 
-    // Copy app styles if provided.
-    if (params->app_style_count > 0) {
-        client->app_style_capacity = params->app_style_count;
-        client->app_style_count = params->app_style_count;
-        client->app_styles = autk_instance_alloc(
-            instance, NULL, 0, client->app_style_capacity * sizeof(autk_style_t *),
-            AUTK_MEMORY_TAG_LIST);
-
-        if (!client->app_styles) {
-            status = AUTK_ERR_OUT_OF_MEMORY;
-            goto err_free;
-        }
-
-        for (uint16_t i = 0; i < params->app_style_count; i++) {
-            client->app_styles[i] = autk_style_retain(params->app_styles[i]);
-        }
-    }
-
     // Initialize the client driver.
     if (driver->init) {
         status = driver->init(client, client->driver_data, params);
@@ -187,7 +161,6 @@ err_fini_client_driver:
     if (driver->fini) {
         driver->fini(client, client->driver_data);
     }
-err_free:
     autk_instance_alloc(instance, client, alloc_size, 0, AUTK_MEMORY_TAG_CLIENT);
     return status;
 }
@@ -352,7 +325,7 @@ autk_client_find_or_create_style_extension(autk_client_t *client,
             .klass = fallback_class,
         };
 
-        AUTK_TRY(autk_style_create(client->instance, &create_params, &style));
+        AUTK_TRY(autk_style_create(client->device, &create_params, &style));
         client->fallback_styles[client->fallback_style_count++] = style;
 
         if (out_style) {

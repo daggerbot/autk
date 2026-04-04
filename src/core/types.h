@@ -72,6 +72,7 @@ struct autk_style {
     _Atomic uint32_t ref_count;
     size_t alloc_size;
     autk_instance_t *instance;
+    autk_device_t *device;
     void *class_data;
     void *user_data;
 };
