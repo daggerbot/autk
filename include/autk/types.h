@@ -72,6 +72,15 @@ typedef enum autk_status {
 #undef AUTK_DO
 } autk_status_t;
 
+typedef struct autk_rect {
+    int32_t x, y;
+    uint32_t width, height;
+} autk_rect_t;
+
+typedef struct autk_bbox {
+    int32_t x0, y0, x1, y1;
+} autk_bbox_t;
+
 typedef union autk_rgba {
     struct {
         uint8_t r, g, b, a;
@@ -92,7 +101,7 @@ typedef struct autk_extension_header {
 
 typedef struct autk_extension_query {
     autk_uuid_t uuid;
-    size_t min_struct_size;
+    uint32_t min_struct_size;
     uint32_t min_version;
 } autk_extension_query_t;
 
@@ -154,7 +163,7 @@ typedef enum autk_message_severity {
 typedef struct autk_source_location {
     const char *func_name;
     const char *file_name;
-    int line_num;
+    uint32_t line_num;
 } autk_source_location_t;
 
 //==============================================================================
@@ -195,13 +204,13 @@ typedef void (*autk_message_func_t)(void *ctx, autk_message_severity_t severity,
                                     const char *message);
 
 typedef struct autk_instance_create_params {
-    size_t struct_size;
+    uint32_t struct_size;
     enum autk_instance_create_flags flags;
     autk_alloc_func_t alloc_func;
     void *alloc_ctx;
     autk_message_func_t message_func;
     void *message_ctx;
-    size_t user_data_size;
+    uint32_t user_data_size;
     const void *user_data_init;
 } autk_instance_create_params_t;
 
@@ -213,14 +222,22 @@ typedef struct autk_instance_create_params {
 
 typedef struct autk_client autk_client_t;
 
+typedef struct autk_client_callbacks {
+    uint32_t struct_size;
+    /// Invoked when the event queue has been fully consumed and the client is about to block
+    /// waiting for new events.
+    void (*begin_wait)(struct autk_client *client, void *user_data);
+} autk_client_callbacks_t;
+
 typedef struct autk_client_create_params {
-    size_t struct_size;
+    uint32_t struct_size;
     const struct autk_client_driver *driver;
     const char *display_name;
     void *driver_init_ctx;
     uint16_t app_style_count;
     struct autk_style *const *app_styles;
-    size_t user_data_size;
+    const autk_client_callbacks_t *callbacks;
+    uint32_t user_data_size;
     const void *user_data_init;
 } autk_client_create_params_t;
 
@@ -232,9 +249,9 @@ typedef struct autk_job {
 
 typedef struct autk_client_driver {
     /// Size of this struct. Must be `sizeof(autk_client_driver_t)`.
-    size_t struct_size;
+    uint32_t struct_size;
     /// Number of bytes to allocate for driver use.
-    size_t driver_data_size;
+    uint32_t driver_data_size;
 
     const struct autk_device_driver *device_driver;
     const struct autk_window_driver *window_driver;
@@ -257,8 +274,8 @@ typedef struct autk_client_driver {
 typedef struct autk_device autk_device_t;
 
 typedef struct autk_device_driver {
-    size_t struct_size;
-    size_t driver_data_size;
+    uint32_t struct_size;
+    uint32_t driver_data_size;
 
     autk_status_t (*init_from_client)(autk_device_t *device, void *driver_data,
                                       autk_client_t *client, void *client_driver_data,
@@ -284,10 +301,10 @@ typedef struct autk_style_class {
 } autk_style_class_t;
 
 typedef struct autk_style_create_params {
-    size_t struct_size;
+    uint32_t struct_size;
     const autk_style_class_t *klass;
     const void *class_init_ctx; // class-specific initialization data
-    size_t user_data_size;
+    uint32_t user_data_size;
     const void *user_data_init;
 } autk_style_create_params_t;
 
@@ -321,8 +338,14 @@ typedef enum autk_window_type {
     AUTK_WINDOW_TYPE_NORMAL,
 } autk_window_type_t;
 
+typedef struct autk_dirty_region {
+    autk_bbox_t full_bbox;
+    size_t partial_bbox_count;
+    const autk_bbox_t *partial_bboxes;
+} autk_dirty_region_t;
+
 typedef struct autk_window_callbacks {
-    size_t struct_size;
+    uint32_t struct_size;
     /// Invoked when the window is destroyed via \ref autk_window_destroy.
     void (*destroying)(autk_window_t *window, void *user_data);
     /// Invoked when a window destroy event is received from the window system without a
@@ -330,11 +353,15 @@ typedef struct autk_window_callbacks {
     void (*invalidated)(autk_window_t *window, void *user_data);
     /// Invoked when the user or window system sends a window close request.
     void (*close_requested)(autk_window_t *window, void *user_data);
+    /// Invoked when the window's content needs to be redrawn.
+    /// If the `dirty_region` parameter is `NULL`, the entire window needs to be redrawn.
+    void (*redraw_requested)(autk_window_t *window, void *user_data,
+                             const autk_dirty_region_t *dirty_region);
 } autk_window_callbacks_t;
 
 typedef struct autk_window_driver {
-    size_t struct_size;
-    size_t driver_data_size;
+    uint32_t struct_size;
+    uint32_t driver_data_size;
 
     autk_status_t (*init)(autk_window_t *window, void *driver_data,
                           const struct autk_window_create_params *params);
@@ -347,7 +374,7 @@ typedef struct autk_window_driver {
 } autk_window_driver_t;
 
 typedef struct autk_window_create_params {
-    size_t struct_size;
+    uint32_t struct_size;
     autk_window_type_t type;
     autk_window_create_flags_t flags;
     const char *title;
@@ -355,7 +382,7 @@ typedef struct autk_window_create_params {
     uint32_t width, height;
     autk_rgba_t background_color;
     const autk_window_callbacks_t *callbacks;
-    size_t user_data_size;
+    uint32_t user_data_size;
     const void *user_data_init;
 } autk_window_create_params_t;
 

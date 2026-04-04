@@ -71,4 +71,10 @@ autk_hash_table_remove(autk_hash_table_t *ht, const void *key);
 AUTK_HIDDEN void *
 autk_hash_table_remove_iter(autk_hash_table_t *ht, autk_hash_iter_t iter);
 
+AUTK_HIDDEN bool
+autk_hash_table_begin(const autk_hash_table_t *ht, autk_hash_iter_t *iter);
+
+AUTK_HIDDEN bool
+autk_hash_table_next(const autk_hash_table_t *ht, autk_hash_iter_t *iter);
+
 #endif // AUTK_UTILITY_HASH_H_

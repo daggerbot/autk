@@ -23,14 +23,14 @@ typedef struct autk_win9x_style_color_theme autk_win9x_style_color_theme_t;
 typedef struct autk_win9x_style_create_params autk_win9x_style_create_params_t;
 
 struct autk_win9x_style_color_theme {
-    size_t struct_size;
+    uint32_t struct_size;
     autk_rgba_t window_background;
 };
 
 struct autk_win9x_style_create_params {
-    size_t struct_size;
+    uint32_t struct_size;
     const autk_win9x_style_color_theme_t *color_theme;
-    size_t user_data_size;
+    uint32_t user_data_size;
     const void *user_data_init;
 };
 

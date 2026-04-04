@@ -30,6 +30,7 @@ struct autk_client {
     const autk_client_driver_t *driver;
     size_t alloc_size;
     autk_instance_t *instance;
+    const autk_client_callbacks_t *callbacks;
 
     // App-specified styles (e.g. autk_client_create_params_t)
     uint16_t app_style_capacity;

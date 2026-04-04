@@ -24,9 +24,112 @@
 
 #include <autk/client.h>
 #include <autk/diagnostics.h>
+#include <autk/math.h>
 
 #include "client.h"
 #include "window.h"
+
+//==============================================================================
+//
+// Event handling
+//
+//==============================================================================
+
+static autk_status_t
+handle_xcb_error(autk_client_t *client, autk_x11_client_data_t *client_data,
+                 const xcb_generic_error_t *error)
+{
+    autk_window_t *window;
+
+    (void)client_data;
+
+    // Report the raw error data.
+    AUTK_ERROR(client->instance, "X11 error: code=%u rid=%" PRIu32 " major=%u minor=%u seq=%u",
+               error->error_code, error->resource_id, error->major_code, error->minor_code,
+               error->sequence);
+
+    // If the error is failed window creation, invalidate the window so we don't keep making
+    // requests with an invalid window ID.
+    if (error->major_code == XCB_CREATE_WINDOW) {
+        window = autk_x11_window_map_get(&client_data->window_map, error->resource_id);
+        if (window) {
+            AUTK_ERROR(client->instance, "X11 window creation failed for window id=%" PRIu32,
+                       error->resource_id);
+            autk_x11_window_invalidate(window->driver_data);
+        }
+    }
+
+    return AUTK_OK;
+}
+
+static autk_status_t
+handle_wm_protocol(autk_x11_client_data_t *client_data, const xcb_client_message_event_t *event)
+{
+    uint32_t protocol = event->data.data32[0];
+    autk_window_t *window;
+
+    if (protocol == client_data->atoms.atom_WM_DELETE_WINDOW) {
+        window = autk_x11_window_map_get(&client_data->window_map, event->window);
+        if (window && window->callbacks && window->callbacks->close_requested) {
+            window->callbacks->close_requested(window, window->user_data);
+        }
+    }
+
+    return AUTK_OK;
+}
+
+static autk_status_t
+handle_client_message(autk_x11_client_data_t *client_data, const xcb_client_message_event_t *event)
+{
+    if (event->type == client_data->atoms.atom_WM_PROTOCOLS && event->format == 32) {
+        return handle_wm_protocol(client_data, event);
+    }
+
+    return AUTK_OK;
+}
+
+static autk_status_t
+handle_xcb_event(autk_client_t *client, autk_x11_client_data_t *client_data,
+                 const xcb_generic_event_t *event)
+{
+    autk_window_t *window;
+    autk_x11_window_data_t *window_data;
+    autk_bbox_t bbox;
+
+    switch (event->response_type & ~0x80) {
+        case 0:
+            return handle_xcb_error(client, client_data, (const xcb_generic_error_t *)event);
+
+        case XCB_CLIENT_MESSAGE:
+            return handle_client_message(client_data, (const xcb_client_message_event_t *)event);
+
+        case XCB_DESTROY_NOTIFY:
+            window = autk_x11_window_map_get(&client_data->window_map,
+                                             ((xcb_destroy_notify_event_t *)event)->window);
+            if (window) {
+                autk_x11_window_invalidate(window->driver_data);
+            }
+            return AUTK_OK;
+
+        case XCB_EXPOSE:
+            window = autk_x11_window_map_get(&client_data->window_map,
+                                             ((xcb_expose_event_t *)event)->window);
+            if (window && window->callbacks && window->callbacks->redraw_requested) {
+                window_data = window->driver_data;
+                bbox = (autk_bbox_t){
+                    .x0 = ((xcb_expose_event_t *)event)->x,
+                    .y0 = ((xcb_expose_event_t *)event)->y,
+                    .x1 = ((xcb_expose_event_t *)event)->x + ((xcb_expose_event_t *)event)->width,
+                    .y1 = ((xcb_expose_event_t *)event)->y + ((xcb_expose_event_t *)event)->height,
+                };
+                autk_bbox_extend(&window_data->dirty_region, bbox);
+            }
+            return AUTK_OK;
+
+        default:
+            return AUTK_OK;
+    }
+}
 
 //==============================================================================
 //
@@ -267,82 +370,32 @@ autk_x11_client_fini(autk_client_t *client, void *opaque_client_data)
     }
 }
 
-static autk_status_t
-handle_wm_protocol(autk_x11_client_data_t *client_data, const xcb_client_message_event_t *event)
+static void
+redraw_dirty_windows(autk_x11_client_data_t *client_data)
 {
-    uint32_t protocol = event->data.data32[0];
-    autk_window_t *window;
+    autk_hash_iter_t iter;
+    autk_x11_window_map_node_t *node;
+    autk_x11_window_data_t *window_data;
+    autk_dirty_region_t dirty_region;
 
-    if (protocol == client_data->atoms.atom_WM_DELETE_WINDOW) {
-        window = autk_x11_window_map_get(&client_data->window_map, event->window);
-        if (window && window->callbacks && window->callbacks->close_requested) {
-            window->callbacks->close_requested(window, window->user_data);
-        }
-    }
-
-    return AUTK_OK;
-}
-
-static autk_status_t
-handle_client_message(autk_x11_client_data_t *client_data, const xcb_client_message_event_t *event)
-{
-    if (event->type == client_data->atoms.atom_WM_PROTOCOLS && event->format == 32) {
-        return handle_wm_protocol(client_data, event);
-    }
-
-    return AUTK_OK;
-}
-
-static autk_status_t
-handle_xcb_error(autk_client_t *client, autk_x11_client_data_t *client_data,
-                 const xcb_generic_error_t *error)
-{
-    autk_window_t *window;
-
-    (void)client_data;
-
-    // Report the raw error data.
-    AUTK_ERROR(client->instance, "X11 error: code=%u rid=%" PRIu32 " major=%u minor=%u seq=%u",
-               error->error_code, error->resource_id, error->major_code, error->minor_code,
-               error->sequence);
-
-    // If the error is failed window creation, invalidate the window so we don't keep making
-    // requests with an invalid window ID.
-    if (error->major_code == XCB_CREATE_WINDOW) {
-        window = autk_x11_window_map_get(&client_data->window_map, error->resource_id);
-        if (window) {
-            AUTK_ERROR(client->instance, "X11 window creation failed for window id=%" PRIu32,
-                       error->resource_id);
-            autk_x11_window_invalidate(window->driver_data);
-        }
-    }
-
-    return AUTK_OK;
-}
-
-static autk_status_t
-handle_xcb_event(autk_client_t *client, autk_x11_client_data_t *client_data,
-                 const xcb_generic_event_t *event)
-{
-    autk_window_t *window;
-
-    switch (event->response_type & ~0x80) {
-        case 0:
-            return handle_xcb_error(client, client_data, (const xcb_generic_error_t *)event);
-
-        case XCB_CLIENT_MESSAGE:
-            return handle_client_message(client_data, (const xcb_client_message_event_t *)event);
-
-        case XCB_DESTROY_NOTIFY:
-            window = autk_x11_window_map_get(&client_data->window_map,
-                                             ((xcb_destroy_notify_event_t *)event)->window);
-            if (window) {
-                autk_x11_window_invalidate(window->driver_data);
+    if (autk_hash_table_begin(&client_data->window_map.ht, &iter)) {
+        do {
+            node = autk_hash_table_get(&client_data->window_map.ht, iter);
+            window_data = node->window->driver_data;
+            if (autk_bbox_is_positive(&window_data->dirty_region)) {
+                if (node->window->callbacks && node->window->callbacks->redraw_requested) {
+                    // NOTE: We're not currently tracking partial regions.
+                    dirty_region = (autk_dirty_region_t){
+                        .full_bbox = window_data->dirty_region,
+                        .partial_bbox_count = 1,
+                        .partial_bboxes = &dirty_region.full_bbox,
+                    };
+                    node->window->callbacks->redraw_requested(node->window, node->window->user_data,
+                                                              &dirty_region);
+                }
+                window_data->dirty_region = (autk_bbox_t){0};
             }
-            return AUTK_OK;
-
-        default:
-            return AUTK_OK;
+        } while (autk_hash_table_next(&client_data->window_map.ht, &iter));
     }
 }
 
@@ -384,7 +437,27 @@ autk_x11_client_run(autk_client_t *client, void *opaque_client_data)
             return status;
         }
 
-        // Block until any input is available.
+        // Handle any available X11 events.
+        while ((event = xcb_poll_for_event(client_data->connection)) != NULL) {
+            status = handle_xcb_event(client, client_data, event);
+            free(event);
+            if (status != AUTK_OK) {
+                return status;
+            }
+            if (client_data->quit_requested) {
+                return AUTK_OK;
+            }
+        }
+
+        // Notify the application that we've processed all pending events and jobs,
+        // so it can perform any necessary idle work.
+        if (client->callbacks && client->callbacks->begin_wait) {
+            client->callbacks->begin_wait(client, client->user_data);
+        }
+
+        redraw_dirty_windows(client_data);
+
+        // Block until either a new job is posted or an X11 event is available.
         status = autk_posix_job_queue_poll(&client_data->job_queue, client_data->display_fd, -1,
                                            &queue_result, &display_result);
         switch (status) {
@@ -398,20 +471,6 @@ autk_x11_client_run(autk_client_t *client, void *opaque_client_data)
 
         if (queue_result == -1 || display_result == -1) {
             return AUTK_ERR_IO_FAILURE;
-        }
-
-        // Check for any pending display events.
-        if (display_result == 1) {
-            while ((event = xcb_poll_for_event(client_data->connection)) != NULL) {
-                status = handle_xcb_event(client, client_data, event);
-                free(event);
-                if (status != AUTK_OK) {
-                    return status;
-                }
-                if (client_data->quit_requested) {
-                    break;
-                }
-            }
         }
     }
 

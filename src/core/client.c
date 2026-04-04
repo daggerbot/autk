@@ -113,6 +113,7 @@ autk_client_create(autk_instance_t *instance, const autk_client_create_params_t 
         .driver = driver,
         .alloc_size = alloc_size,
         .instance = instance,
+        .callbacks = params->callbacks,
         .driver_data = driver->driver_data_size ? (char *)client + driver_data_offset : NULL,
         .device = (autk_device_t *)((char *)client + device_offset),
         .user_data = params->user_data_size ? (char *)client + user_data_offset : NULL,

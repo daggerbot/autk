@@ -12,5 +12,5 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-add_executable(autk-hello hello.c)
-target_link_libraries(autk-hello autk autk-compiler-options)
+add_executable(playground playground.c)
+target_link_libraries(playground autk autk-compiler-options)

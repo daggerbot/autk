@@ -19,6 +19,17 @@
 
 #include "types.h"
 
+AUTK_BEGIN_DECLS
+
+AUTK_API void
+autk_bbox_extend(autk_bbox_t *bbox, autk_bbox_t add);
+
+static inline bool
+autk_bbox_is_positive(const autk_bbox_t *bbox)
+{
+    return bbox->x0 < bbox->x1 && bbox->y0 < bbox->y1;
+}
+
 static inline int32_t
 autk_scale_int32(int32_t n, autk_u30x2_t scale)
 {
@@ -42,5 +53,7 @@ autk_uuid_is_zero(const autk_uuid_t *uuid)
 {
     return uuid->parts[0] == 0 && uuid->parts[1] == 0;
 }
+
+AUTK_END_DECLS
 
 #endif // AUTK_MATH_H_

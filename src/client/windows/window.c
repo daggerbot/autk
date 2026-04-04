@@ -38,6 +38,7 @@ autk_windows_window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
     autk_windows_window_data_t *window_data;
     HDC hdc;
     RECT rect;
+    autk_dirty_region_t dirty_region;
 
     switch (msg) {
         case WM_CLOSE:
@@ -74,6 +75,27 @@ autk_windows_window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
                 }
             }
             return 0;
+
+        case WM_PAINT:
+            window = (autk_window_t *)GetWindowLongPtrW(hwnd, GWLP_USERDATA);
+            if (window && window->callbacks && window->callbacks->redraw_requested) {
+                // Note: We currently don't actually report the partial bboxes.
+                if (GetUpdateRect(hwnd, &rect, FALSE)) {
+                    dirty_region = (autk_dirty_region_t){
+                        .full_bbox = {rect.left, rect.top, rect.right, rect.bottom},
+                        .partial_bbox_count = 1,
+                        .partial_bboxes = &dirty_region.full_bbox,
+                    };
+                    window->callbacks->redraw_requested(window, window->user_data, &dirty_region);
+                    ValidateRect(hwnd, &rect);
+                } else {
+                    window->callbacks->redraw_requested(window, window->user_data, NULL);
+                    ValidateRect(hwnd, NULL);
+                }
+                return 0;
+            } else {
+                return DefWindowProcW(hwnd, msg, wparam, lparam);
+            }
 
         default:
             return DefWindowProcW(hwnd, msg, wparam, lparam);

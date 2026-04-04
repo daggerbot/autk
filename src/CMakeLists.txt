@@ -23,6 +23,7 @@ target_sources(autk PRIVATE
     core/device.c
     core/diagnostics.c
     core/instance.c
+    core/math.c
     core/style.c
     core/window.c
 

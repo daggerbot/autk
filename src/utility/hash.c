@@ -364,3 +364,40 @@ autk_hash_table_remove_iter(autk_hash_table_t *ht, autk_hash_iter_t iter)
     ht->used_count--;
     return element;
 }
+
+AUTK_HIDDEN bool
+autk_hash_table_begin(const autk_hash_table_t *ht, autk_hash_iter_t *iter)
+{
+    autk_hash_t *bucket;
+
+    if (ht->used_count == 0) {
+        return false;
+    }
+
+    for (size_t i = 0; i < ht->bucket_count; i++) {
+        bucket = (autk_hash_t *)(ht->data + i * ht->bucket_size);
+        if (*bucket & HASH_OCCUPIED_BIT) {
+            iter->index = i;
+            return true;
+        }
+    }
+
+    // Should never be reached unless the table is corrupted.
+    return false;
+}
+
+AUTK_HIDDEN bool
+autk_hash_table_next(const autk_hash_table_t *ht, autk_hash_iter_t *iter)
+{
+    autk_hash_t *bucket;
+
+    for (size_t i = iter->index + 1; i < ht->bucket_count; i++) {
+        bucket = (autk_hash_t *)(ht->data + i * ht->bucket_size);
+        if (*bucket & HASH_OCCUPIED_BIT) {
+            iter->index = i;
+            return true;
+        }
+    }
+
+    return false;
+}

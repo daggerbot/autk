@@ -77,16 +77,39 @@ autk_windows_client_init(autk_client_t *client, void *opaque_client_data,
 }
 
 static autk_status_t
+handle_msg(autk_client_t *client, MSG *msg)
+{
+    (void)client;
+
+    TranslateMessage(msg);
+    DispatchMessageW(msg);
+    return AUTK_OK;
+}
+
+static autk_status_t
 autk_window_client_run(autk_client_t *client, void *opaque_client_data)
 {
     char errbuf[256];
     MSG msg;
     BOOL msg_result;
 
-    (void)client;
     (void)opaque_client_data;
 
     while (1) {
+        // Handle any immediately available messages.
+        if (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE)) {
+            if (msg.message == WM_QUIT) {
+                break;
+            }
+            AUTK_TRY(handle_msg(client, &msg));
+        }
+
+        // Notify the application that it can perform work while waiting for messages.
+        if (client->callbacks && client->callbacks->begin_wait) {
+            client->callbacks->begin_wait(client, client->user_data);
+        }
+
+        // Block until another message is available.
         msg_result = GetMessageW(&msg, NULL, 0, 0);
         if (msg_result == -1) {
             AUTK_ERROR(client->instance, "GetMessageW failed: %s",
@@ -95,8 +118,7 @@ autk_window_client_run(autk_client_t *client, void *opaque_client_data)
         } else if (!msg_result) {
             break;
         } else {
-            TranslateMessage(&msg);
-            DispatchMessageW(&msg);
+            AUTK_TRY(handle_msg(client, &msg));
         }
     }
 

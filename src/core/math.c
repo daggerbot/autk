@@ -14,19 +14,28 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <autk/ext/style_ext_base.h>
-#include <core/types.h>
+#include <autk/math.h>
 
-AUTK_API autk_rgba_t
-autk_style_ext_base_get_default_window_background_color(const autk_style_t *style,
-                                                        const autk_extension_header_t *ext_header,
-                                                        autk_window_type_t window_type)
+AUTK_API void
+autk_bbox_extend(autk_bbox_t *bbox, autk_bbox_t add)
 {
-    autk_style_ext_base_v1_t *ext = (autk_style_ext_base_v1_t *)ext_header;
-
-    if (ext->get_default_window_background_color) {
-        return ext->get_default_window_background_color(style, style->class_data, window_type);
-    } else {
-        return AUTK_RGB(255, 255, 255);
+    if (add.x0 >= add.x1 || add.y0 >= add.y1) {
+        return;
+    }
+    if (bbox->x0 >= bbox->x1 || bbox->y0 >= bbox->y1) {
+        *bbox = add;
+        return;
+    }
+    if (add.x0 < bbox->x0) {
+        bbox->x0 = add.x0;
+    }
+    if (add.y0 < bbox->y0) {
+        bbox->y0 = add.y0;
+    }
+    if (add.x1 > bbox->x1) {
+        bbox->x1 = add.x1;
+    }
+    if (add.y1 > bbox->y1) {
+        bbox->y1 = add.y1;
     }
 }

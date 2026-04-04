@@ -29,13 +29,14 @@ debug_alloc(void *ctx, void *block, size_t old_size, size_t new_size, autk_memor
     return autk_default_alloc(ctx, block, old_size, new_size, tag);
 }
 
-// Provide a handler for when `AUTK_EXPECT` fails.
-void
-autk_expect_failed(const char *expr, autk_status_t status, const char *module_name,
-                   const autk_source_location_t *location)
+static void
+on_redraw_requested(autk_window_t *window, void *user_data, const autk_dirty_region_t *dirty_region)
 {
-    // Use the default behavior.
-    autk_default_expect_failed(expr, status, module_name, location);
+    (void)window;
+    (void)user_data;
+    (void)dirty_region;
+
+    fputs("redraw\n", stderr);
 }
 
 int
@@ -49,6 +50,7 @@ main(int argc, char *argv[])
     static const autk_window_callbacks_t window_callbacks = {
         .struct_size = sizeof(autk_window_callbacks_t),
         .close_requested = &autk_window_callback_quit, // quit the app when the window is closed
+        .redraw_requested = &on_redraw_requested,
     };
     static const autk_window_create_params_t window_params = {
         .struct_size = sizeof(autk_window_create_params_t),
@@ -82,4 +84,13 @@ main(int argc, char *argv[])
     autk_instance_destroy(instance);
 
     return 0;
+}
+
+// Provide a handler for when `AUTK_EXPECT` fails.
+void
+autk_expect_failed(const char *expr, autk_status_t status, const char *module_name,
+                   const autk_source_location_t *location)
+{
+    // Use the default behavior.
+    autk_default_expect_failed(expr, status, module_name, location);
 }

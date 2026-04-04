@@ -46,6 +46,7 @@ struct autk_x11_atoms {
 struct autk_x11_window_data {
     xcb_connection_t *connection;
     uint32_t window_id;
+    autk_bbox_t dirty_region;
 };
 
 struct autk_x11_window_map {
