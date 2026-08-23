@@ -9,13 +9,17 @@
 #include "string_utils.h"
 
 struct message_state {
-    AutkMessageFunc func;
+    autk_message_func_t func;
+    autk_message_filter_func_t filter_func;
     void *ctx;
     autk_message_severity_t min_severity;
 };
 
 static struct message_state s_message_state = {
     .func = autk_message_default,
+#ifndef __unix__ // no-op on POSIX
+    .filter_func = autk_message_default_filter,
+#endif
 };
 
 //==============================================================================
@@ -89,9 +93,14 @@ AUTK_API void
 autk_fatal_message(const char *module_name, const autk_source_location_t *location,
                    const char *message)
 {
-    if (s_message_state.func) {
+    if (s_message_state.func
+        && (!s_message_state.filter_func
+            || s_message_state.filter_func(s_message_state.ctx, AUTK_MESSAGE_SEVERITY_FATAL,
+                                           module_name)))
+    {
         autk_message(AUTK_MESSAGE_SEVERITY_FATAL, module_name, location, message);
     }
+
     autk_fatal_exit();
 }
 
@@ -101,11 +110,16 @@ autk_fatal_message_f(const char *module_name, const autk_source_location_t *loca
 {
     va_list args;
 
-    if (s_message_state.func) {
+    if (s_message_state.func
+        && (!s_message_state.filter_func
+            || s_message_state.filter_func(s_message_state.ctx, AUTK_MESSAGE_SEVERITY_FATAL,
+                                           module_name)))
+    {
         va_start(args, fmt);
         do_message_vf(AUTK_MESSAGE_SEVERITY_FATAL, module_name, location, fmt, args);
         va_end(args);
     }
+
     autk_fatal_exit();
 }
 
@@ -113,9 +127,14 @@ AUTK_API void
 autk_fatal_message_vf(const char *module_name, const autk_source_location_t *location,
                       const char *fmt, va_list args)
 {
-    if (s_message_state.func) {
+    if (s_message_state.func
+        && (!s_message_state.filter_func
+            || s_message_state.filter_func(s_message_state.ctx, AUTK_MESSAGE_SEVERITY_FATAL,
+                                           module_name)))
+    {
         do_message_vf(AUTK_MESSAGE_SEVERITY_FATAL, module_name, location, fmt, args);
     }
+
     autk_fatal_exit();
 }
 
@@ -123,10 +142,15 @@ AUTK_API void
 autk_message(autk_message_severity_t severity, const char *module_name,
              const autk_source_location_t *location, const char *message)
 {
-    if (s_message_state.func && severity >= s_message_state.min_severity) {
+    if (s_message_state.func && severity >= s_message_state.min_severity
+        && (!s_message_state.filter_func
+            || s_message_state.filter_func(s_message_state.ctx, AUTK_MESSAGE_SEVERITY_FATAL,
+                                           module_name)))
+    {
         s_message_state.func(s_message_state.ctx, severity, module_name, location,
                              message ? message : "<null>");
     }
+
     if (severity == AUTK_MESSAGE_SEVERITY_FATAL) {
         autk_fatal_exit();
     }
@@ -139,11 +163,16 @@ autk_message_f(autk_message_severity_t severity, const char *module_name,
     va_list args;
     autk_status_t status = AUTK_OK;
 
-    if (s_message_state.func && severity >= s_message_state.min_severity) {
+    if (s_message_state.func && severity >= s_message_state.min_severity
+        && (!s_message_state.filter_func
+            || s_message_state.filter_func(s_message_state.ctx, AUTK_MESSAGE_SEVERITY_FATAL,
+                                           module_name)))
+    {
         va_start(args, fmt);
         status = do_message_vf(severity, module_name, location, fmt, args);
         va_end(args);
     }
+
     if (severity == AUTK_MESSAGE_SEVERITY_FATAL) {
         autk_fatal_exit();
     }
@@ -157,9 +186,14 @@ autk_message_vf(autk_message_severity_t severity, const char *module_name,
 {
     autk_status_t status = AUTK_OK;
 
-    if (s_message_state.func && severity >= s_message_state.min_severity) {
+    if (s_message_state.func && severity >= s_message_state.min_severity
+        && (!s_message_state.filter_func
+            || s_message_state.filter_func(s_message_state.ctx, AUTK_MESSAGE_SEVERITY_FATAL,
+                                           module_name)))
+    {
         status = do_message_vf(severity, module_name, location, fmt, args);
     }
+
     if (severity == AUTK_MESSAGE_SEVERITY_FATAL) {
         autk_fatal_exit();
     }
@@ -168,9 +202,11 @@ autk_message_vf(autk_message_severity_t severity, const char *module_name,
 }
 
 AUTK_API void
-autk_set_message_handler(AutkMessageFunc func, void *ctx)
+autk_set_message_handler(autk_message_func_t func, autk_message_filter_func_t filter_func,
+                         void *ctx)
 {
     s_message_state.func = func;
+    s_message_state.filter_func = filter_func;
     s_message_state.ctx = ctx;
 }
 

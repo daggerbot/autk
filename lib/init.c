@@ -6,6 +6,9 @@
 
 #include "driver.h"
 
+#ifdef _WIN32
+# include "driver/windows/init.h"
+#endif
 #if AUTK_X11
 # include "driver/x11/init.h"
 #endif
@@ -18,6 +21,9 @@ autk_init(void)
     if (!autk_d) {
 #if AUTK_X11
         autk_d = &autk_x11_driver_procs;
+#endif
+#ifdef _WIN32
+        autk_d = &autk_win32_driver_procs;
 #endif
     }
 

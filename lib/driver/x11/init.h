@@ -7,8 +7,6 @@
 
 #include <xcb/xcb.h>
 
-#include <autk/types.h>
-
 #include "../../driver.h"
 
 typedef struct autk_x11_global autk_x11_global_t;

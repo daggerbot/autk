@@ -86,7 +86,7 @@ endif()
 if(WIN32)
     target_compile_definitions(autk-compiler-options INTERFACE
         _UNICODE
-        _WIN32_WINNT=0x0400
+        _WIN32_WINNT=0x0500
         NOMINMAX
         UNICODE
     )

@@ -83,6 +83,11 @@ if(UNIX)
     )
 elseif(WIN32)
     target_link_options(autk-default INTERFACE -municode)
+    target_sources(autk-private INTERFACE
+        driver/windows/init.c
+
+        os/windows/diagnostics.c
+    )
 endif()
 
 #===============================================================================

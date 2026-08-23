@@ -20,12 +20,14 @@ typedef uint32_t autk_status_t; ///< \see \ref autk_status
     m(AUTK_ERR_DYNAMIC_LINK, "Dynamic library linking failed") \
     m(AUTK_ERR_INCONSISTENT_STATE, "Inconsistent internal state") \
     m(AUTK_ERR_INVALID_CONFIG, "Invalid configuration") \
+    m(AUTK_ERR_INVALID_ENUM, "Invalid enumeration") \
     m(AUTK_ERR_IO, "I/O error") \
     m(AUTK_ERR_LIMIT_EXCEEDED, "Limit exceeded") \
     m(AUTK_ERR_NO_DRIVER, "No suitable Autk driver configured") \
     m(AUTK_ERR_OUT_OF_MEMORY, "Out of memory") \
     m(AUTK_ERR_PROTOCOL, "Protocol violation") \
-    m(AUTK_ERR_STRING_FORMAT, "String formatting failed")
+    m(AUTK_ERR_STRING_FORMAT, "String formatting failed") \
+    m(AUTK_ERR_UNIMPLEMENTED, "Not implemented")
 /* clang-format on */
 
 enum autk_status {

@@ -198,9 +198,11 @@ typedef int8_t autk_message_severity_t;
 
 typedef struct autk_source_location autk_source_location_t;
 
-typedef void (*AutkMessageFunc)(void *ctx, autk_message_severity_t severity,
-                                const char *module_name, const autk_source_location_t *location,
-                                const char *message);
+typedef void (*autk_message_func_t)(void *ctx, autk_message_severity_t severity,
+                                    const char *module_name, const autk_source_location_t *location,
+                                    const char *message);
+typedef bool (*autk_message_filter_func_t)(void *ctx, autk_message_severity_t severity,
+                                           const char *module_name);
 
 enum autk_console_mode {
     AUTK_CONSOLE_MODE_ATTACH = 1,
@@ -257,8 +259,13 @@ AUTK_API void
 autk_message_default(void *unused_ctx, autk_message_severity_t severity, const char *module_name,
                      const autk_source_location_t *location, const char *message);
 
+AUTK_API bool
+autk_message_default_filter(void *unused_ctx, autk_message_severity_t severity,
+                            const char *module_name);
+
 AUTK_API void
-autk_set_message_handler(AutkMessageFunc func, void *ctx);
+autk_set_message_handler(autk_message_func_t func, autk_message_filter_func_t filter_func,
+                         void *ctx);
 
 AUTK_API void
 autk_set_min_message_severity(autk_message_severity_t severity);

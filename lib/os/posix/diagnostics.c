@@ -70,7 +70,7 @@ autk_console_init(AUTK_UNUSED autk_console_mode_t mode)
 }
 
 AUTK_API void
-autk_message_default(AUTK_UNUSED void *unused_ctx, autk_message_severity_t severity,
+autk_message_default(AUTK_UNUSED void *ctx, autk_message_severity_t severity,
                      const char *module_name, const autk_source_location_t *location,
                      const char *message)
 {
@@ -80,4 +80,11 @@ autk_message_default(AUTK_UNUSED void *unused_ctx, autk_message_severity_t sever
     autk_message_stderr_impl(s_posix_message_state.ansi_escapes ? AUTK_MESSAGE_ANSI_ESCAPES : 0,
                              severity, module_name, location, message);
     pthread_mutex_unlock(&s_posix_message_state.mutex);
+}
+
+AUTK_API bool
+autk_message_default_filter(AUTK_UNUSED void *ctx, AUTK_UNUSED autk_message_severity_t severity,
+                            AUTK_UNUSED const char *module_name)
+{
+    return true;
 }
