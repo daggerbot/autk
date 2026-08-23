@@ -1,0 +1,41 @@
+Language: Cpp
+Standard: c++17
+BasedOnStyle: LLVM
+
+AlignEscapedNewlines: DontAlign
+AlignTrailingComments: Never
+AllowShortFunctionsOnASingleLine: None
+BreakAfterReturnType: All
+BreakBeforeBinaryOperators: NonAssignment
+BreakBeforeBraces: Custom
+ColumnLimit: 100
+IncludeIsMainRegex: '^$'
+IndentCaseLabels: true
+IndentPPDirectives: AfterHash
+IndentWidth: 4
+PPIndentWidth: 1
+
+BraceWrapping:
+  AfterCaseLabel: false
+  AfterControlStatement: MultiLine
+  AfterEnum: false
+  AfterFunction: true
+  AfterStruct: false
+  AfterUnion: false
+  AfterExternBlock: false
+  BeforeElse: false
+  BeforeWhile: false
+  IndentBraces: false
+  SplitEmptyFunction: true
+  SplitEmptyRecord: false
+
+AttributeMacros:
+  - AUTK_ALWAYS_INLINE
+  - AUTK_API
+  - AUTK_FMTSTR
+  - AUTK_HIDDEN
+  - AUTK_NODISCARD
+  - AUTK_NORETURN
+  - AUTK_PRINTFLIKE
+  - AUTK_RESTRICT
+  - AUTK_UNUSED
